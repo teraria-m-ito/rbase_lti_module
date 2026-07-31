@@ -1,0 +1,75 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1><%= t(:"views.lms_user_imports.new.title")%></h1>
+        <small><%= t(:"views.lms_user_imports.new.header_guide") %></small>
+      </div>
+    </div>
+  </div>
+</div>
+<section class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-12">
+        <%= simple_form_for(@lms_user_import, url: lms_user_imports_path, html: {class: "thin_simple_form", multipart: true, id: :fileupload}) do |f| %>
+          <div class="card">
+            <div class="card-body">
+              <%= link_to t(:"views.lms_user_imports.new.button_download"), download_lms_user_imports_path("xlsx"), class: "btn btn-primary btn-sm" %>
+            </div>
+            <div class="card-body">
+              <%= f.error_notification %>
+              <div class="form-group">
+                <%= render partial: 'form_import', locals: {form: f} %>
+              </div>
+            </div>
+            <div class="card-footer">
+              <%= f.submit t(:"views.lms_user_imports.new.button_upload"), class: "btn btn-primary btn-sm"%>
+              <%= link_to t(:"views.lms_user_imports.new.button_cancel"), lms_users_path, class: "btn btn-default btn-sm btn-sm" %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+    <% unless @lms_user_import_errors.blank? %>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card">
+            <div class="card-header">
+              <%= t(:"views.lms_user_imports.new.error_info_title") %>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-hover table-striped table-sm">
+                  <tbody>
+                    <tr>
+                      <td><%= @lms_user_import.filename %></td>
+                    </tr>
+                  </tbody>
+                </table>
+                <table class="table table-hover table-striped table-sm">
+                  <thead class="thead-dark">
+                    <tr>
+                      <th><%= t(:"views.lms_user_imports.fields.line_no")%></th>
+                      <th><%= t(:"views.lms_user_imports.fields.error_message")%></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% @lms_user_import_errors.each do |error| %>
+                      <tr>
+                        <td><%= error.line_no %></td>
+                        <td><%= convert_rf(error.error_message) %></td>
+                      </tr>
+                    <% end %>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</section>
+
+

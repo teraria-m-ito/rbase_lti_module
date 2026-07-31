@@ -1,0 +1,41 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1><%= t(:"views.lti.orgs.index.title")%></h1>
+      </div>
+      <div class="col-sm-6">
+        <div class="float-sm-right">
+          <%= link_to t(:"views.lti.orgs.index.button_new"), new_lti_org_path(clear: true), class: "btn btn-primary btn-sm" %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card">
+          <div class="collapse show" id="condition-card">
+            <%= simple_form_for @condition, url: lti_orgs_path, html: {method: :get, id: "lti_orgs_search_conditions", class: :thin_simple_form} do |f| %>
+              <div class="card-body">
+                <%= f.error_notification %>
+                <div class="form-group">
+                  <%= render partial: 'search_conditions', locals: {form: f} %>
+                </div>
+              </div>
+              <div class="card-footer">
+                <%= f.submit t(:"views.lti.orgs.index.button_search"), class: "btn btn-primary btn-sm"%>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+    <% unless @lti_orgs.nil? %>
+      <%= render partial: 'search_results' %>
+    <% end %>
+  </div>
+</section>

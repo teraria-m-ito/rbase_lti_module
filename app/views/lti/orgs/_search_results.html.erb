@@ -1,0 +1,48 @@
+<%= turbo_frame_tag "entry-turbo-org_search_results" do %>
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <% unless @lti_orgs.blank? %>
+          <div class="card-title"></div>
+          <div class="card-body">
+            <%= page_entries_info @lti_orgs %>
+            <div class="table-responsive">
+              <table class="table table-hover table-striped table-sm">
+                <thead class="thead-dark">
+                  <tr class="d-flex">
+                    <th class="col-md-2 col-2"><%= table_sort(t(:"views.lti.orgs.fields.org_cd"), :org_cd) %></th>
+                    <th class="col-md-4 col-4"><%= table_sort(t(:"views.lti.orgs.fields.org_name"), :org_name) %></th>
+                    <th class="col-md-2 col-2"><%= table_sort(t(:"views.lti.orgs.fields.org_div"), :org_div) %></th>
+                    <th class="col-md-2 col-2"><%= table_sort(t(:"views.lti.orgs.fields.parent_org"), :parent_org) %></th>
+                    <th class="col-md-2 col-2"><%= t(:"views.lti.orgs.fields.action")%></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @lti_orgs.each do |lti_org|%>
+                    <tr class="d-flex">
+                      <td class="col-md-2 col-2"><%= link_to lti_org.org_cd, lti_org_path(lti_org) %></td>
+                      <td class="col-md-4 col-4"><%= lti_org.org_name %></td>
+                      <td class="col-md-2 col-2"><%= lti_org.org_div_name %></td>
+                      <td class="col-md-2 col-2"><%= display_institution(lti_org) %></td>
+                      <td scope="row" class="col-md-2 col-2 action">
+                        <% unless lti_org.org_div_key == :root %>
+                          <%= link_to t(:"views.lti.orgs.index.table_orgs.button_edit"), edit_lti_org_path(lti_org, clear: true), class: "btn btn-primary btn-sm" %>
+                          <%= link_to t(:"views.lti.orgs.index.table_orgs.button_destroy"), lti_org_path(lti_org), data: {turbo_method: :delete,  turbo_confirm: t(:"views.common.destroy_confirm_message") }, class: "btn btn-danger btn-sm" unless lti_org.has_children? %>
+                        <% end %>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+            <%= paginate @lti_orgs %>
+          </div>
+        <% else %>
+          <div class="card-body">
+            <%= t(:"views.lti.orgs.index.messages.no_record") %> 
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+<% end %>

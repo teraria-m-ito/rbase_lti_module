@@ -1,0 +1,51 @@
+<%= turbo_frame_tag "entry-turbo-operation_log_search_results" do %>
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <% unless @lti_operation_logs.blank? %>
+          <div class="card-title"></div>
+          <div class="card-body">
+            <%= page_entries_info @lti_operation_logs %>
+            <div class="table-responsive">
+              <table class="table table-fixed table-hover table-striped table-sm">
+                <thead class="thead-dark no_action">
+                  <tr>
+                    <th><%= table_sort(t(:"views.lti.operation_logs.fields.operated_at"), :operated_at) %></th>
+                    <th><%= table_sort(t(:"views.lti.operation_logs.fields.user_id"), :user_id) %></th>
+                    <th><%= table_sort(t(:"views.lti.operation_logs.fields.user_name"), :user_name) %></th>
+                    <th><%= table_sort(t(:"views.lti.operation_logs.fields.institution"), :institution) %></th>
+                    <th><%= table_sort(t(:"views.lti.operation_logs.fields.department"), :department) %></th>
+                    <th><%= table_sort(t(:"views.lti.operation_logs.fields.form_type"), :form_type) %></th>
+                    <th><%= table_sort(t(:"views.lti.operation_logs.fields.screen_name"), :screen_name) %></th>
+                    <th><%= table_sort(t(:"views.lti.operation_logs.fields.operation_div"), :operation_div) %></th>
+                    <th><%= t(:"views.lti.operation_logs.fields.description") %></th>
+                  </tr>
+                </thead>
+                <tbody class="no_action">
+                  <% @lti_operation_logs.each do |operation_log|%>
+                    <tr>
+                      <td><%= datetime_string(operation_log.operated_at) %></td>
+                      <td><%= operation_log.user_id %></td>
+                      <td><%= operation_log.user_name %></td>
+                      <td><%= operation_log.institution %></td>
+                      <td><%= operation_log.department %></td>
+                      <td><%= operation_log.form_type_name %></td>
+                      <td><%= operation_log.screen_name %></td>
+                      <td><%= operation_log.operation_div_name %></td>
+                      <td><%= operation_log.description %></td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+            <%= paginate @lti_operation_logs %>
+          </div>
+        <% else %>
+          <div class="card-body">
+            <%= t(:"views.lti.operation_logs.index.messages.no_record") %> 
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+<% end %>

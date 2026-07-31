@@ -1,0 +1,8 @@
+<div class="form-group form-inline input-group-sm align-items-start">
+  <%= form.input :org_cd, input_html: {col: 3} %>
+  <%= form.input :org_name, input_html: {col: 5} %>
+</div>
+<div class="form-group form-inline input-group-sm align-items-start">
+  <%= form.input :org_div, as: :select, collection: @org_div, input_html: {col: 3}%>
+  <%= form.input :parent_org_id, as: :select, collection: @parent_org_id, input_html: {col: 3}%>
+</div>

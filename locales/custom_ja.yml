@@ -1,0 +1,358 @@
+ja:
+  date_format: "%Y/%m/%d"
+  datetime_format: "%Y/%m/%d %H:%M:%S"
+  datetime_min_format: "%Y/%m/%d %H:%M"
+  simple_form:
+    required:
+      html: '<abbr class="nec">必須</abbr>'
+  function:
+    admin/lti_databases: "管理者メニュー/LTIデータベース"
+
+    user_application: "管理/ユーザコントローラ"
+    lms_users: "管理/LMSユーザ"
+
+    lms_user_imports: "管理/LMSユーザインポート"
+    lms_user_import_attachments: "管理/LMSユーザインポートアップロード"
+
+    lti/bases: "LTI/共通/ベースコントローラ"
+    lti/admin_bases: "LTI/管理者/管理者ベースコントローラ"
+
+    lti/homes: "LTI/共通/ホーム"
+
+    lti/orgs: "LTI/管理/組織管理"
+
+    lti/operation_logs: "eポート/管理/操作ログ"
+    lti/import_histories: "LTI/管理/インポート履歴"
+
+    lti/settings: "LTI/管理/設定"
+
+    action:
+      admin/lti_databases_index: "検索"
+      admin/lti_databases_show: "詳細"
+      admin/lti_databases_create: "新規登録"
+      admin/lti_databases_update: "更新"
+      admin/lti_databases_destroy: "削除"
+
+      lms_users_index: "検索"
+      lms_users_show: "詳細"
+      lms_users_create: "新規登録"
+      lms_users_update: "更新"
+      lms_users_destroy: "削除"
+
+      lms_user_imports_create: "LMSユーザインポート登録"
+      lms_user_imports_download: "LMSユーザインポートダウンロード"
+
+      lms_user_import_attachments_create: "LMSユーザインポートアップロード"
+
+      lti/bases_login: "ログイン"
+      lti/bases_launch: "起動"
+      lti/bases_jwks: "jwks"
+      lti/bases_result_service: "結果サービス"
+      lti/bases_score_service: "評価サービス"
+      lti/bases_configure: "設定"
+
+      lti/orgs_index: "検索"
+      lti/orgs_show: "詳細"
+      lti/orgs_create: "新規登録"
+      lti/orgs_update: "更新"
+      lti/orgs_destroy: "削除"
+
+      lti/operation_logs_index: "検索"
+
+      lti/import_histories_index: "検索"
+      lti/import_histories_show: "詳細"
+
+      lti/settings_create: "登録"
+
+  menu:
+    top:
+      general_nav: "LTI機能"
+      lti:
+        orgs:
+          index: "組織"
+      lms_users:
+        index: "LMSユーザ"
+    admin:
+      lti_databases: "LTIデータベース"
+
+  activemodel:
+    errors:
+      messages:
+        invalid: "正しくありません。"
+        not_a_number: "数字を指定して下さい。"
+    common:
+      messages:
+        paginate_message: "全件で %{count} 件が存在しています。"
+    attributes:
+      admin_users/sso_login_form:
+        iss: "LMSサーバ"
+      lti/orgs/search_conditions:
+        org_cd: "組織CD"
+        org_name: "組織名"
+        org_div: "組織区分"
+        parent_org_id: "親組織"
+      lti/operation_logs/search_conditions:
+        operated_at_from: "操作日(FROM)"
+        operated_at_to: "操作日(TO)"
+        user_id: "ユーザID"
+        user_name: "ユーザ名"
+        institution: "学部"
+        department: "学科"
+        form_type: "対象"
+        operation_div: "操作"
+      lti/import_histories/search_conditions:
+        import_type: "インポート対象"
+        operated_at_from: "操作日(FROM)"
+        operated_at_to: "操作日(TO)"
+        user_id: "ユーザID"
+  activerecord:
+    errors:
+      messages:
+        either_blank: "のいずれかを入力してください"
+        not_set_required: "見出し、ラベルを選択している場合は、必須設定は任意としてください"
+        invalid_file_contents: "アップロードしたファイルの内容が正しくありません"
+        invalid_inst_depart: "学部／学科の名称もしくは組み合わせが正しくありません"
+        invalid_attribute: "は無効です"
+
+        no_exists_user_attr: "定義済の属性名を指定して下さい"
+
+        no_exists_input_example: "定義済の定型文名を指定して下さい"
+
+        no_exists_username: "：存在しているユーザIDを指定してください"
+        no_exists_username_when_create: "：登録時は存在していないユーザIDを指定してください"
+        become_no_exists_student: "： 担当学生(%{username})は 削除登録されており、担当学生に設定することはできません。"
+        no_exists_username_when_edit_or_destroy: "：編集時もしくは削除時は存在しているユーザIDを指定してください"
+
+        no_exists: "が存在していません。"
+        fail_import: "インポートに失敗しました。"
+
+    attributes:
+      admin_user:
+        inst_org_id:  "学部"
+        dept_org_id:  "学科"
+      lti_database:
+        site_ids: "サイト"
+        name: "データベース名"
+        iss: "iss"
+        client_id: "クライアントID"
+        auth_login_url: "認証ログインURL"
+        auth_token_url: "認証トークンURL"
+        key_set_url: "キー取得URL"
+        private_key_file: "プライベートキー情報"
+        public_key: "公開キー情報"
+        kid: "kid"
+        deployment_json: "デプロイメント記述"
+      lms_user:
+        site_ids: "サイト"
+        username: "ユーザ名"
+        name: "名前"
+        given_name: "名"
+        family_name: "姓"
+        email: "email"
+        role: "権限"
+        lms: "登録元LMS"
+        inst_org_id: "学部"
+        dept_org_id: "学科科"
+        entering_year: "入学年度"
+        grade: "学年"
+      lti_org:
+        org_cd: "組織CD"
+        org_name: "組織名"
+        org_div: "組織区分"
+        parent_org_id: "親組織"
+      lti_import_history:
+        import_type_name: "インポート対象"
+        created_at: "要求日時"
+        file_name: "ファイル名"
+        status_message: "メッセージ"
+        message:
+          finished: "インポート終了"
+          processing: "処理中"
+          error: "エラー発生"
+  views:
+    common:
+      answer_confirm_message: "入力を送信します。よろしいですか？"
+      answer_complete_message: "入力を送信しました。"
+      loading: "読込中"
+
+      copy_and_update_confirm_message: "コピー後に入力画面に遷移します。よろしいですか？"
+
+    lti_databases:
+      fields:
+        site_name: "サイト名"
+        name: "データベース名"
+        iss: "iss"
+      index:
+        title: "LTIデータベース一覧"
+        conditions:
+          sites: "サイト"
+          name: "データベース名"
+          iss: "iss"
+        button_new: "新しいデータベースを追加"
+        button_search: "検索"
+        table_lti_databases:
+          button_edit: "編集"
+          button_destroy: "削除"
+      show:
+        title: "LTIデータベース詳細"
+        button_back: "前のページへ"
+      new:
+        title: "新規LTIデータベース登録"
+        button_create: "登録"
+        button_cancel: "前のページへ"
+        header_guide: "LTIデータベース内容を入力して、登録ボタンをクリックして下さい。"
+        button_update_pem: "生成"
+        button_update_pubpem: "公開鍵"
+        button_update_kid: "生成"
+      edit:
+        title: "LTIデータベース編集"
+        button_update: "更新"
+        button_cancel: "前のページへ"
+        header_guide: "LTIデータベース内容を入力して、更新ボタンをクリックして下さい。"
+        table_system_settings:
+        button_update_pem: "生成"
+        button_update_pubpem: "公開鍵"
+        button_update_kid: "生成"
+    lms_users:
+      fields:
+        site_name: "サイト名"
+        username: "ユーザ名"
+        name: "名前"
+        role: "権限"
+        email: "email"
+        action: "アクション"
+      index:
+        title: "LMSユーザ一覧"
+        conditions:
+          sites: "サイト"
+          username: "ユーザ名"
+          name: "名前"
+          email: "email"
+        button_search: "検索"
+        button_new: "新規LMSユーザ登録"
+        button_import: "LMSユーザ一括アップロード"
+        table_lms_users:
+          button_edit: "編集"
+          button_destroy: "削除"
+      new:
+        title: "LMSユーザ登録"
+        header_guide: "新規LMSユーザを登録します。入力後に、登録ボタンをクリックして下さい。"
+        button_create: "登録"
+        button_cancel: "戻る"
+      edit:
+        title: "LMSユーザ編集"
+        header_guide: "LMSユーザを編集します。入力後に、更新ボタンをクリックして下さい。"
+        button_update: "更新"
+        button_cancel: "戻る"
+      show:
+        title: "LMSユーザ参照"
+        button_back: "前のページへ"
+
+    lms_user_imports:
+      messages:
+        already_exists: "：作成時は、存在していないユーザIDを指定してください"
+        already_email_exists: "：作成時は、存在していないメールアドレスを指定してください"
+        no_exists_username: "：編集、削除時は、存在しているユーザIDを指定してください"
+      fields:
+        line_no: "行目"
+        error_message: "内容"
+      new:
+        title: "LMSユーザ一括アップロード"
+        header_guide: "LMSユーザの一括アップロードを行います。"
+        button_download: "ダウンロード"
+        button_upload: "アップロード"
+        button_cancel: "戻る"
+        error_info_title: "エラー情報"
+
+    lti:
+      common:
+        operation_log:
+          sign_in:
+            title: "ログイン"
+          sign_out:
+            title: "ログアウト"
+
+        messages:
+          file_allow_upload_number: "アップロード可能数："
+          file_allow_upload_ext: "アップロード許可ファイル拡張子："
+          no_multi_answer: "評価対象外"
+          yet_multi_answer: "未評価"
+
+      admin_top_menu:
+        org_button: "組織登録"
+        operation_log_button: "操作ログ"
+        import_history_button: "インポート履歴"
+
+      orgs:
+        fields:
+          org_cd: "組織CD"
+          org_name: "組織名"
+          org_div: "組織区分"
+          parent_org: "親組織"
+          action: "Action"
+        index:
+          messages:
+            no_record: "該当する組織はありません。"
+          title: "組織一覧"
+          button_new: "新規組織登録"
+          button_search: "検索"
+          table_orgs:
+            button_edit: "編集"
+            button_destroy: "削除"
+        new:
+          title: "組織登録"
+          header_guide: "新規組織を登録します。入力後に、登録ボタンをクリックして下さい。"
+          button_create: "登録"
+          button_cancel: "戻る"
+        edit:
+          title: "組織編集"
+          header_guide: "組織を編集します。入力後に、更新ボタンをクリックして下さい。"
+          button_update: "更新"
+          button_cancel: "戻る"
+        show:
+          title: "組織参照"
+          header_guide: "組織を参照します。"
+          button_cancel: "戻る"
+
+      operation_logs:
+        fields:
+          operated_at: "操作日時"
+          user_id: "ユーザID"
+          user_name: "ユーザ名"
+          institution: "学部"
+          department: "学科"
+          form_type: "対象"
+          operation_div: "操作"
+          screen_name: "画面名"
+          description: "説明"
+        index:
+          messages:
+            no_record: "該当する操作ログはありません。"
+          title: "操作ログ一覧"
+          button_search: "検索"
+          table_input_categories:
+
+      import_histories:
+        fields:
+          import_type: "インポート対象"
+          imported_at: "操作日時"
+          file_name: "ファイル名"
+          user_id: "ユーザID"
+          status: "ステータス"
+          action: "Action"
+        index:
+          messages:
+            no_record: "該当するインポート履歴はありません。"
+          title: "インポート履歴一覧"
+          button_search: "検索"
+          table_import_histories:
+            button_show: "詳細"
+        show:
+          title: "インポート履歴詳細"
+          header_guide: "インポート履歴を参照します。"
+          header_title: "要求情報"
+          error_info_title: "エラー情報"
+          table_import_histories:
+            line_no: "行目"
+            error_message: "内容"
+          button_cancel: "戻る"

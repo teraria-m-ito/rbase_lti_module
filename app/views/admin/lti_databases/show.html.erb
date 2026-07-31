@@ -1,0 +1,30 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1><%= t(:"views.lti_databases.show.title")%></h1>
+      </div>
+    </div>
+  </div>
+</div>
+<section class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card">
+          <%= simple_form_for([:admin, @lti_database]) do |f| %>
+            <div class="card-body">
+              <%= f.error_notification %>
+              <div class="form-group">
+                <%= render partial: 'show_form', locals: {form: f} %>
+              </div>
+            </div>
+            <div class="card-footer">
+              <%= link_to t(:"views.lti_databases.show.button_back"), admin_lti_databases_path, class: "btn btn-default btn-sm" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

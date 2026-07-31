@@ -1,0 +1,28 @@
+<%= page_entries_info @lti_databases %>
+
+<table class="table table-hover table-striped table-sm">
+<% unless @lti_databases.empty? %>
+  <thead class="thead-dark">
+    <tr>
+      <th class="col-md-1"><%= t(:"views.lti_databases.fields.site_name")%></th>
+      <th class="col-md-4"><%= t(:"views.lti_databases.fields.name")%></th>
+      <th class="col-md-5"><%= t(:"views.lti_databases.fields.iss")%></th>
+      <th class="col-md-2"><%= t(:"views.lti_databases.fields.action")%></th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @lti_databases.each do |lti_database|%>
+      <tr>
+        <td><%= lti_database.sites.map(&:site_name).join("<br />").html_safe %></td>
+        <td><%= link_to lti_database.name, admin_lti_database_path(lti_database) %></td>
+        <td><%= lti_database.iss %></td>
+        <td>
+          <%= link_to t(:"views.lti_databases.index.table_lti_databases.button_edit"), edit_admin_lti_database_path(lti_database), class: "btn btn-primary btn-sm" %>
+          <%= link_to t(:"views.lti_databases.index.table_lti_databases.button_destroy"), admin_lti_database_path(lti_database), data: { turbo_method: :delete, turbo_confirm: t(:"views.common.destroy_confirm_message") }, class: "btn btn-danger btn-sm" %></td>
+        </td>
+      </tr>
+    <% end %> 
+  </tbody>
+<% end %>
+</table>
+<%= paginate @lti_databases %>

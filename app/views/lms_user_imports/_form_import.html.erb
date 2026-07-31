@@ -1,0 +1,57 @@
+<div class="fileupload-buttonbar">
+  <div>
+    <span class="btn btn-success fileinput-button">
+      <i class="fa fa-plus"></i>
+      <span><%= t(:"views.lms_users.fields.add_file")%></span>
+      <input class="file optional" id="lms_user_import_attachments_attributes_0_document" name="lms_user_import[lms_user_import_attachments_attributes][][document]" type="file" />
+    </span>
+    <button type="submit" class="btn btn-primary start" id="upload-btn" style="display:none;">
+      <i class="glyphicon glyphicon-upload"></i>
+      <span>Start upload</span>
+    </button>
+    <span class="has-error"><%= form.error :base %></span>
+    <span class="fileupload-process"></span>
+  </div>
+  <div class="fileupload-progress fade">
+    <div class="progress progress-striped active" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+      <div class="progress-bar progress-bar-success" style="width:0%;"></div>
+    </div>
+    <div class="progress-extended">&nbsp;</div>
+  </div>
+</div>
+
+<%= form.input :uuid, as: :hidden%>
+
+<table role="presentation" class="table table-striped"><tbody class="files"></tbody></table>
+
+<script id="template-upload" type="text/x-tmpl">
+{% for (var i=0, file; file=o.files[i]; i++) { %}
+    <tr class="template-upload fade">
+        <td>
+            <span class="preview"></span>
+        </td>
+        <td>
+            <p class="name">{%=file.name%}</p>
+            <strong class="error text-danger"></strong>
+        </td>
+        <td>
+            <p class="size">Processing...</p>
+            <div class="progress progress-striped active" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="progress-bar progress-bar-success" style="width:0%;"></div></div>
+        </td>
+        <td>
+            {% if (!i && !o.options.autoUpload) { %}
+                <button class="btn btn-primary start" disabled style="display:none;">
+                    <i class="glyphicon glyphicon-upload"></i>
+                    <span>Start</span>
+                </button>
+            {% } %}
+            {% if (!i) { %}
+                <button class="btn btn-warning cancel">
+                    <i class="glyphicon glyphicon-ban-circle"></i>
+                    <span>Cancel</span>
+                </button>
+            {% } %}
+        </td>
+    </tr>
+{% } %}
+</script>

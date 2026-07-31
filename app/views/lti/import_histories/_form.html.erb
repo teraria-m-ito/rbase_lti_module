@@ -1,0 +1,24 @@
+<div class="form-group">
+  <div class="card">
+    <div class="card-header">
+      <%= t(:"views.lti.import_histories.show.header_title")%>
+    </div>
+    <div class="card-body">
+      <div class="form-group form-inline input-group-sm align-items-start">
+        <%= form.input :import_type_name, input_html: {col: 3} %>
+      </div>
+      <div class="form-group form-inline input-group-sm align-items-start">
+        <%= form.input :created_at, as: :string, input_html: {value: form.object.created_at.try(:strftime, "%Y-%m-%d %H:%M:%S"), col: 3} %>
+      </div>
+      <div class="form-group form-inline input-group-sm align-items-start">
+        <%= form.input :file_name, input_html: {col: 5} %>
+      </div>
+      <div class="form-group form-inline input-group-sm align-items-start">
+        <%= form.input :status_message, input_html: {col: 5} %>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+

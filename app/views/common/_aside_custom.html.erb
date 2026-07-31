@@ -1,0 +1,84 @@
+<!-- Main Sidebar Container -->
+<aside class="main-sidebar sidebar-dark-primary elevation-4">
+  <%= link_to "/top", {class: "brand-link"} do %>
+    <%= image_tag 'logo.png', class: "brand-image" %>
+    <span class="brand-text font-weight-light"><%= SystemSetting[:app_name, current_admin_user.nil? ? Site.first.id : current_admin_user.try(:selected_site).to_i] || "TITLE" %> </span>
+  <% end %>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <!-- Sidebar Menu -->
+    <nav class="mt-2">
+      <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+        <% if admin_user_signed_in? %>
+          <% if current_admin_user.admin? || current_admin_user.manager? %>
+            <li class="nav-item <%= @sidebar_admin_opened %>">
+              <a href="#" class="nav-link">
+                <i class="nav-icon fas fa-toolbox"></i>
+                <p>
+                  <%= t(:"menu.top.admin_nav") %>
+                  <i class="right fas fa-angle-left"></i>
+                </p>
+              </a>
+              <%= render partial: 'common/admin_menu' %>
+            </li>
+          <% end %>
+
+          <li class="nav-item <%= @sidebar_opened %>">
+            <a href="#" class="nav-link">
+              <i class="nav-icon fas fa-graduation-cap"></i>
+              <p><%= t(:"menu.top.general_nav") %>
+                <i class="fas fa-angle-left right"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+              <% if Ability.new(current_admin_user, "issues", "index").is_enable? %>
+                <li class="nav-item">
+                  <%= link_to('/issues?clear=true', class: "nav-link") do %>
+                    <% if is_current_page?("/issues") %>
+                      <i class="fa fa-tasks text-red"></i>
+                    <% else %>
+                      <i class="fa fa-tasks"></i>
+                    <% end %>
+                    <p><%= t(:"menu.top.issues.index") %></p>
+                  <% end %>
+                </li>
+              <% end %>
+              <% if Ability.new(current_admin_user, "lti/orgs", "index").is_enable? %>
+                <li class="nav-item">
+                  <%= link_to('/lti/orgs?clear=true', class: "nav-link") do %>
+                    <% if is_current_page?("/lti/orgs") %>
+                      <i class="fa fa-sitemap text-red"></i>
+                    <% else %>
+                      <i class="fa fa-sitemap"></i>
+                    <% end %>
+                    <p><%= t(:"menu.top.lti.orgs.index") %></p>
+                  <% end %>
+                </li>
+              <% end %>
+              <% if Ability.new(current_admin_user, "lms_users", "index").is_enable? %>
+                <li class="nav-item">
+                  <%= link_to('/lms_users?clear=true', class: "nav-link") do %>
+                    <% if is_current_page?("/lms_users") %>
+                      <i class="fa fa-users text-red"></i>
+                    <% else %>
+                      <i class="fa fa-users"></i>
+                    <% end %>
+                    <p><%= t(:"menu.top.lms_users.index") %></p>
+                  <% end %>
+                </li>
+              <% end %>
+            </ul>
+          </li>
+        <% end %>
+      </ul>
+    </nav>
+    <%# ポップアップ禁止を回避する為にダミーのリンクを設置する %>
+    <div style="display: none;">
+      <%= link_to("dummy", "#dymmy", target: "external_tab", id: "sidebar_popup", class: "nav-link external-link") %>
+    </div>
+    <!-- Sidebar Menu -->
+    <!-- /.sidebar-menu -->
+  </div>
+  <!-- /.sidebar -->
+</aside>

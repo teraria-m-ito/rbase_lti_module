@@ -1,0 +1,11 @@
+<div class="form-group form-inline input-group-sm">
+  <%= form.input :sites, as: :check_boxes,
+                  label: t(:"views.lti_databases.index.conditions.sites"),
+                 collection: @sites.map{|x| [x.site_name,x.id.to_s]},
+                 item_wrapper_class: "form-check-inline"
+  %>
+</div>
+<div class="form-group form-inline input-group-sm align-items-start">
+  <%= form.input :name, label: t(:"views.lti_databases.index.conditions.name"), input_html: {col:3} %>
+  <%= form.input :iss, label: t(:"views.lti_databases.index.conditions.iss"), input_html: {col:3} %>
+</div>

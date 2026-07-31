@@ -1,0 +1,8 @@
+<div class="form-group form-inline input-group-sm">
+  <%= form.label t(:"views.lms_users.index.conditions.sites") %><br/>
+  <%= collection_check_boxes(:lms_users_search_conditions, :sites, @sites, :id, :site_name, include_hidden: false) %>
+</div>
+<div class="form-group form-inline input-group-sm">
+  <%= form.input :username, label: t(:"views.lms_users.index.conditions.username") %>
+  <%= form.input :email, as: :string, label: t(:"views.lms_users.index.conditions.email") %>
+</div>

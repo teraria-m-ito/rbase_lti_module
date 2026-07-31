@@ -1,0 +1,82 @@
+<!-- app/views/lti/dynamic_registrations/registration_result.html.erb -->
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>LTI Dynamic Registration Result</title>
+  <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif; margin: 2rem; }
+      code { background: #f5f5f5; padding: .1rem .3rem; border-radius: 3px; }
+  </style>
+</head>
+<body>
+<% if @client_id.present? %>
+  <h2>登録を完了しました</h2>
+  <p><strong>client_id</strong>: <code><%= @client_id %></code></p>
+  <% if @deployment_id.present? %>
+    <p><strong>deployment_id</strong>: <code><%= @deployment_id %></code></p>
+  <% end %>
+  <p>このウィンドウは自動的に閉じられません。ブラウザのリロードを行って下さい。</p>
+  <script>
+    (function notifyMoodleDynRegComplete() {
+      const payloadObj  = { type: 'lti.dynreg.complete', ok: true };
+      const payloadText = 'lti.dynreg.complete';
+      
+      var targetOrigin = (function() {
+        try {
+          if (document.referrer) {
+            const u = new URL(document.referrer);
+            return u.origin;
+          }
+        } catch(e) {}
+        return '*';
+      })();
+      function postOnce() {
+        let sent = false;
+        
+        try {
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage(payloadObj,  targetOrigin); sent = true;
+            window.parent.postMessage(payloadText, targetOrigin);
+          }
+        } catch(e) { console.warn('postMessage to parent failed:', e); }
+        
+        try {
+          if (window.top && window.top !== window) {
+            window.top.postMessage(payloadObj,  targetOrigin); sent = true;
+            window.top.postMessage(payloadText, targetOrigin);
+          }
+        } catch(e) { console.warn('postMessage to top failed:', e); }
+        
+        try {
+          if (window.opener && !window.opener.closed) {
+            window.opener.postMessage(payloadObj,  targetOrigin); sent = true;
+            window.opener.postMessage(payloadText, targetOrigin);
+          }
+        } catch(e) { console.warn('postMessage to opener failed:', e); }
+        
+        console.log('[dynreg] postMessage sent?', sent, 'targetOrigin=', targetOrigin);
+        return sent;
+      }
+      
+      let ok = postOnce();
+      let retries = 30;
+      const timer = setInterval(function() {
+        if (ok || --retries <= 0) { clearInterval(timer); return; }
+        ok = postOnce();
+      }, 100);
+      
+      setTimeout(function(){ try { window.close(); } catch(e) {} }, 1000);
+    })();
+  </script>
+<% else %>
+  <h2>登録に失敗しました。</h2>
+  <pre><%= @error_message.to_s %></pre>
+  <script>
+    try {
+      window.opener && window.opener.postMessage({ type: 'lti.dynreg.complete', ok: false }, '*');
+    } catch(e) {}
+  </script>
+<% end %>
+</body>
+</html>

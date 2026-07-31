@@ -1,0 +1,30 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1><%= t(:"views.lms_users.show.title")%></h1>
+      </div>
+    </div>
+  </div>
+</div>
+<section class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card">
+          <%= simple_form_for(@lms_user) do |f| %>
+            <div class="card-body">
+              <%= f.error_notification %>
+              <div class="form-group">
+                <%= render partial: 'form', locals: {form: f} %>
+              </div>
+            </div>
+            <div class="card-footer">
+              <%= link_to t(:"views.lms_users.show.button_back"), lms_users_path, class: "btn btn-default btn-sm" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

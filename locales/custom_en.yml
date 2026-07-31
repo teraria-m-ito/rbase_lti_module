@@ -1,0 +1,358 @@
+en:
+  date_format: "%Y/%m/%d"
+  datetime_format: "%Y/%m/%d %H:%M:%S"
+  datetime_min_format: "%Y/%m/%d %H:%M"
+  simple_form:
+    required:
+      html: '<abbr class="nec">Required</abbr>'
+  function:
+    admin/lti_databases: "Admin / LTI databases"
+
+    user_application: "Admin / User controller"
+    lms_users: "Admin / LMS users"
+
+    lms_user_imports: "Admin / LMS user import"
+    lms_user_import_attachments: "Admin / LMS user import upload"
+
+    lti/bases: "LTI / Common / Base controller"
+    lti/admin_bases: "LTI / Admin / Admin base controller"
+
+    lti/homes: "LTI / Common / Home"
+
+    lti/orgs: "LTI / Admin / Organizations"
+
+    lti/operation_logs: "e-Port / Admin / Operation log"
+    lti/import_histories: "LTI / Admin / Import history"
+
+    lti/settings: "LTI / Admin / Settings"
+
+    action:
+      admin/lti_databases_index: "Search"
+      admin/lti_databases_show: "Details"
+      admin/lti_databases_create: "Create"
+      admin/lti_databases_update: "Update"
+      admin/lti_databases_destroy: "Delete"
+
+      lms_users_index: "Search"
+      lms_users_show: "Details"
+      lms_users_create: "Create"
+      lms_users_update: "Update"
+      lms_users_destroy: "Delete"
+
+      lms_user_imports_create: "LMS user import (register)"
+      lms_user_imports_download: "LMS user import (download)"
+
+      lms_user_import_attachments_create: "LMS user import (upload)"
+
+      lti/bases_login: "Sign in"
+      lti/bases_launch: "Launch"
+      lti/bases_jwks: "jwks"
+      lti/bases_result_service: "Result service"
+      lti/bases_score_service: "Scoring service"
+      lti/bases_configure: "Settings"
+
+      lti/orgs_index: "Search"
+      lti/orgs_show: "Details"
+      lti/orgs_create: "Create"
+      lti/orgs_update: "Update"
+      lti/orgs_destroy: "Delete"
+
+      lti/operation_logs_index: "Search"
+
+      lti/import_histories_index: "Search"
+      lti/import_histories_show: "Details"
+
+      lti/settings_create: "Register"
+
+  menu:
+    top:
+      general_nav: "LTI"
+      lti:
+        orgs:
+          index: "Organizations"
+      lms_users:
+        index: "LMS users"
+    admin:
+      lti_databases: "LTI databases"
+
+  activemodel:
+    errors:
+      messages:
+        invalid: "is invalid."
+        not_a_number: "must be a number."
+    common:
+      messages:
+        paginate_message: "%{count} entries in total."
+    attributes:
+      admin_users/sso_login_form:
+        iss: "LMS server"
+      lti/orgs/search_conditions:
+        org_cd: "Org code"
+        org_name: "Organization name"
+        org_div: "Organization type"
+        parent_org_id: "Parent organization"
+      lti/operation_logs/search_conditions:
+        operated_at_from: "Operation date (from)"
+        operated_at_to: "Operation date (to)"
+        user_id: "User ID"
+        user_name: "User name"
+        institution: "Faculty / graduate school"
+        department: "Department / major"
+        form_type: "Target"
+        operation_div: "Operation"
+      lti/import_histories/search_conditions:
+        import_type: "Import target"
+        operated_at_from: "Operation date (from)"
+        operated_at_to: "Operation date (to)"
+        user_id: "User ID"
+  activerecord:
+    errors:
+      messages:
+        either_blank: "Please fill in at least one."
+        not_set_required: "If a heading or label is selected, required settings are optional."
+        invalid_file_contents: "The uploaded file contents are invalid."
+        invalid_inst_depart: "Faculty/department name or combination is invalid."
+        invalid_attribute: " is invalid."
+
+        no_exists_user_attr: "Specify a defined attribute name."
+
+        no_exists_input_example: "Specify a defined template text name."
+
+        no_exists_username: ": Specify an existing user ID."
+        no_exists_username_when_create: ": When registering, specify a user ID that does not already exist."
+        become_no_exists_student: ": Assigned student (%{username}) is marked deleted and cannot be assigned."
+        no_exists_username_when_edit_or_destroy: ": When editing or deleting, specify an existing user ID."
+
+        no_exists: " does not exist."
+        fail_import: "Import failed."
+
+    attributes:
+      admin_user:
+        inst_org_id: "Faculty"
+        dept_org_id: "Department"
+      lti_database:
+        site_ids: "Sites"
+        name: "Database name"
+        iss: "iss"
+        client_id: "Client ID"
+        auth_login_url: "Auth login URL"
+        auth_token_url: "Auth token URL"
+        key_set_url: "Key set URL"
+        private_key_file: "Private key"
+        public_key: "Public key"
+        kid: "kid"
+        deployment_json: "Deployment definition"
+      lms_user:
+        site_ids: "Sites"
+        username: "Username"
+        name: "Name"
+        given_name: "Given name"
+        family_name: "Family name"
+        email: "email"
+        role: "Role"
+        lms: "Source LMS"
+        inst_org_id: "Faculty"
+        dept_org_id: "Department"
+        entering_year: "Enrollment year"
+        grade: "Grade/year"
+      lti_org:
+        org_cd: "Org code"
+        org_name: "Organization name"
+        org_div: "Organization type"
+        parent_org_id: "Parent organization"
+      lti_import_history:
+        import_type_name: "Import target"
+        created_at: "Requested at"
+        file_name: "File name"
+        status_message: "Message"
+        message:
+          finished: "Import finished"
+          processing: "Processing"
+          error: "Error"
+  views:
+    common:
+      answer_confirm_message: "Submit your entry. Continue?"
+      answer_complete_message: "Your entry was submitted."
+      loading: "Loading"
+
+      copy_and_update_confirm_message: "You will be taken to the entry screen after copying. Continue?"
+
+    lti_databases:
+      fields:
+        site_name: "Site name"
+        name: "Database name"
+        iss: "iss"
+      index:
+        title: "LTI databases"
+        conditions:
+          sites: "Sites"
+          name: "Database name"
+          iss: "iss"
+        button_new: "Add database"
+        button_search: "Search"
+        table_lti_databases:
+          button_edit: "Edit"
+          button_destroy: "Delete"
+      show:
+        title: "LTI database details"
+        button_back: "Back"
+      new:
+        title: "New LTI database"
+        button_create: "Register"
+        button_cancel: "Back"
+        header_guide: "Enter LTI database details and click Register."
+        button_update_pem: "Generate"
+        button_update_pubpem: "Public key"
+        button_update_kid: "Generate"
+      edit:
+        title: "Edit LTI database"
+        button_update: "Save"
+        button_cancel: "Back"
+        header_guide: "Enter LTI database details and click Save."
+        table_system_settings:
+        button_update_pem: "Generate"
+        button_update_pubpem: "Public key"
+        button_update_kid: "Generate"
+    lms_users:
+      fields:
+        site_name: "Site name"
+        username: "Username"
+        name: "Name"
+        role: "Role"
+        email: "email"
+        action: "Action"
+      index:
+        title: "LMS users"
+        conditions:
+          sites: "Sites"
+          username: "Username"
+          name: "Name"
+          email: "email"
+        button_search: "Search"
+        button_new: "New LMS user"
+        button_import: "Bulk upload LMS users"
+        table_lms_users:
+          button_edit: "Edit"
+          button_destroy: "Delete"
+      new:
+        title: "New LMS user"
+        header_guide: "Register a new LMS user. Enter details and click Register."
+        button_create: "Register"
+        button_cancel: "Back"
+      edit:
+        title: "Edit LMS user"
+        header_guide: "Edit the LMS user. Enter details and click Save."
+        button_update: "Save"
+        button_cancel: "Back"
+      show:
+        title: "LMS user"
+        button_back: "Back"
+
+    lms_user_imports:
+      messages:
+        already_exists: ": When creating, specify a user ID that does not already exist."
+        already_email_exists: ": When creating, specify an email address that does not already exist."
+        no_exists_username: ": When editing or deleting, specify an existing user ID."
+      fields:
+        line_no: "Line"
+        error_message: "Details"
+      new:
+        title: "Bulk upload LMS users"
+        header_guide: "Bulk upload LMS users."
+        button_download: "Download"
+        button_upload: "Upload"
+        button_cancel: "Back"
+        error_info_title: "Errors"
+
+    lti:
+      common:
+        operation_log:
+          sign_in:
+            title: "Sign in"
+          sign_out:
+            title: "Sign out"
+
+        messages:
+          file_allow_upload_number: "Max uploads:"
+          file_allow_upload_ext: "Allowed file extensions:"
+          no_multi_answer: "Not gradable"
+          yet_multi_answer: "Not yet graded"
+
+      admin_top_menu:
+        org_button: "Organizations"
+        operation_log_button: "Operation log"
+        import_history_button: "Import history"
+
+      orgs:
+        fields:
+          org_cd: "Org code"
+          org_name: "Organization name"
+          org_div: "Organization type"
+          parent_org: "Parent organization"
+          action: "Action"
+        index:
+          messages:
+            no_record: "No organizations found."
+          title: "Organizations"
+          button_new: "New organization"
+          button_search: "Search"
+          table_orgs:
+            button_edit: "Edit"
+            button_destroy: "Delete"
+        new:
+          title: "New organization"
+          header_guide: "Register a new organization. Enter details and click Register."
+          button_create: "Register"
+          button_cancel: "Back"
+        edit:
+          title: "Edit organization"
+          header_guide: "Edit the organization. Enter details and click Save."
+          button_update: "Save"
+          button_cancel: "Back"
+        show:
+          title: "Organization"
+          header_guide: "View organization."
+          button_cancel: "Back"
+
+      operation_logs:
+        fields:
+          operated_at: "Operation time"
+          user_id: "User ID"
+          user_name: "User name"
+          institution: "Faculty / graduate school"
+          department: "Department / major"
+          form_type: "Target"
+          operation_div: "Operation"
+          screen_name: "Screen"
+          description: "Description"
+        index:
+          messages:
+            no_record: "No operation logs found."
+          title: "Operation log"
+          button_search: "Search"
+          table_input_categories:
+
+      import_histories:
+        fields:
+          import_type: "Import target"
+          imported_at: "Operation time"
+          file_name: "File name"
+          user_id: "User ID"
+          status: "Status"
+          action: "Action"
+        index:
+          messages:
+            no_record: "No import history found."
+          title: "Import history"
+          button_search: "Search"
+          table_import_histories:
+            button_show: "Details"
+        show:
+          title: "Import history details"
+          header_guide: "View import history."
+          header_title: "Request information"
+          error_info_title: "Errors"
+          table_import_histories:
+            line_no: "Line"
+            error_message: "Details"
+          button_cancel: "Back"

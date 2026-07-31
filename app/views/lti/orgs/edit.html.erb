@@ -1,0 +1,38 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1><%= t(:"views.lti.orgs.edit.title")%></h1>
+        <small><%= t(:"views.lti.orgs.edit.header_guide")%></small>
+      </div>
+      <div class="col-sm-6">
+        <div class="float-sm-right">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<section class="content">
+  <div class="container-fluid">
+    <%= simple_form_for(@lti_org, html: {class: "thin_simple_form", id: "edit_lti_org_form", data: {turbo_confirm: t(:"views.common.update_confirm_message")}}) do |f| %>
+      <div class="row">
+        <div class="col-md-12">
+          <%= f.error_notification %>
+          <div class="card">
+            <div class="card-body">
+              <div class="form-group">
+                <%= render partial: 'form', locals: {form: f} %>
+              </div>
+            </div>
+            <div class="card-footer">
+              <%= f.submit t(:"views.lti.orgs.edit.button_update"), class: "btn btn-primary btn-sm"%>
+              <%= link_to t(:"views.lti.orgs.edit.button_cancel"), lti_orgs_path, class: "btn btn-default btn-sm btn-sm" %>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</section>
+
+

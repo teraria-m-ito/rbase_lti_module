@@ -1,0 +1,57 @@
+<%= turbo_frame_tag "entry-turbo-import_histories_search_results" do %>
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <% unless @lti_import_histories.blank? %>
+          <div class="card-title"></div>
+          <div class="card-body">
+            <%#= page_entries_info @lti_import_histories %>
+            <div class="table-responsive">
+              <table class="table table-hover table-striped table-sm">
+                <thead class="thead-dark">
+                  <tr>
+                    <th class="col-md-2 col-2"><%= table_sort(t(:"views.lti.import_histories.fields.import_type"), :import_type) %></th>
+                    <th class="col-md-2 col-2"><%= table_sort(t(:"views.lti.import_histories.fields.imported_at"), :imported_at) %></th>
+                    <th class="col-md-2 col-2"><%= t(:"views.lti.import_histories.fields.file_name") %></th>
+                    <th class="col-md-2 col-2"><%= t(:"views.lti.import_histories.fields.user_id")%></th>
+                    <th class="col-md-2 col-2"><%= t(:"views.lti.import_histories.fields.status")%></th>
+                    <th class="col-md-2 col-2"><%= t(:"views.lti.import_histories.fields.action")%></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @lti_import_histories.each do |lti_import_history|%>
+                    <tr>
+                      <td class="col-md-2 col-2">
+                        <%= lti_import_history.import_type_name %>
+                      </td>
+                      <td class="col-md-2 col-2">
+                        <%= lti_import_history.created_at.try(:strftime, "%Y-%m-%d %H:%M:%S") %>
+                      </td>
+                      <td class="col-md-2 col-2">
+                        <%= lti_import_history.file_name %>
+                      </td>
+                      <td class="col-md-2 col-2">
+                        <%= lti_import_history.user_name %>
+                      </td>
+                      <td class="col-md-2 col-2">
+                        <%= lti_import_history.status_message %>
+                      </td>
+                      <td scope="row" class="col-md-2 col-2 action">
+                        <%= link_to t(:"views.lti.import_histories.index.table_import_histories.button_show"), lti_import_history_path(lti_import_history, clear: true), class: "btn btn-primary btn-sm" %>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+            <%#= paginate @lti_import_histories %>
+          </div>
+        <% else %>
+          <div class="card-body">
+            <%= t(:"views.lti.import_histories.index.messages.no_record") %> 
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+<% end %>

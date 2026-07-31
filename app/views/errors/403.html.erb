@@ -1,0 +1,8 @@
+<h3>アクセスエラー</h3>
+<h4>Code 403</h4>
+<p>
+  アクセス権限がない為、ページアクセスを中断しました。<br/>
+  前回ログインから時間が経過している場合、<br/>
+  <a href="<%= ::SystemSetting.get_setting(:lms_url, 1)%>"><%= ::SystemSetting.get_setting(:lms_url, 1)%></a><br/>
+  から再ログイン後に、当該コースから、再度、eポートフォリオにアクセス下さい。
+</p>

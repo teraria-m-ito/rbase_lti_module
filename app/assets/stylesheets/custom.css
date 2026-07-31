@@ -1,0 +1,107 @@
+.keep-all {
+    word-break: keep-all;
+    overflow-wrap: break-word;
+}
+
+div.file_submission_dialog {
+    display: none;
+}
+
+div.file_submission_dialog hr {
+    margin-top: 0rem;
+    margin-bottom: 0.5rem;
+}
+
+table.rubric > tbody > tr > td:first-child {
+    background-color: #CCEEFF;
+    font-weight: 800;
+}
+
+table.rubric > tbody > tr > td > input[type="radio"] {
+    display: none;
+}
+
+table.rubric > tbody > tr > td > label {
+    font-weight: 400 !important;
+}
+
+table.rubric > tbody > tr > td.rubric_selected {
+    background-color: #ff8888;
+}
+
+table.rubric > tbody > tr > td.rubric_pdf_selected {
+    background: repeating-linear-gradient(
+            to right,
+            #ccc,
+            #ccc 2px,
+            transparent 2px,
+            transparent 2px
+    );
+}
+
+@media print {
+    table.rubric > tbody > tr > td.rubric_pdf_selected {
+        background-color: #ff8888;
+        font-weight: 800 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}
+
+p.rubric_define_error {
+    color: #ff0000;
+}
+
+.tooltip-inner {
+    max-width: 300rem !important;
+    text-align: left !important;
+}
+
+.with-navlink {
+/*    padding-top: 52px !important; */
+}
+
+.without-navlink {
+/*    padding-top: 44px !important; */
+}
+
+@media (min-width: 1052px) {
+    .admin_sub_menu {
+        top: 33px !important;
+    }
+}
+@media (max-width: 1051px) {
+    .admin_sub_menu {
+        top: 56px !important;
+    }
+}
+
+/* 2段目の細かい見た目（任意） */
+.admin_sub_menu {
+    border-bottom: 1px solid #dee2e6;
+    z-index: 1034;
+    font-size: small;
+    padding-top: 0.5rem !important;
+    padding-bottom: 4px !important;
+}
+
+.admin_sub_menu a.nav-link:not(.active) {
+    background-color: rgba(0,0,0,.125);
+}
+.not_submitted {
+    color:  #ff0000;
+}
+tr.not_submitted:hover {
+    color:  #ff0000 !important;
+}
+
+.menu-badge {
+    margin-left: 0.1rem;
+}
+
+.badge-multi {
+    align-items: center;
+    vertical-align: middle;
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+}

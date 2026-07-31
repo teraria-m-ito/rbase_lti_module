@@ -1,0 +1,30 @@
+<div class="form-group form-inline input-group-sm align-items-start">
+  <%= form.input :site_ids, as: :check_boxes,
+                 collection: @sites.map{|x| [x.site_name,x.id]}
+  %>
+</div>
+<div class="form-group form-inline input-group-sm align-items-start">
+  <%= form.input :username %>
+  <%= form.input :name %>
+</div>
+<div class="form-group form-inline input-group-sm align-items-start">
+  <%= form.input :family_name %>
+  <%= form.input :given_name %>
+</div>
+<div class="form-group form-inline input-group-sm align-items-start">
+  <%= form.input :email, as: :string, input_html: {col: 3} %>
+  <%= form.input :role, as: :select, collection: LmsUser.role_enum.map{|x| ["#{x.name}(#{x[:role_name]})", x.id]} %>
+</div>
+
+<div class="form-group form-inline input-group-sm align-items-start">
+  <%= form.input :lms, input_html: {col: 7} %>
+</div>
+
+<div class="form-group form-inline input-group-sm align-items-start">
+  <%= form.input :inst_org_id, as: :select, collection: @institutions.map{|x|[x.org_name, x.id]}, input_html: {class: "select_institution", col: 2} %>
+  <%= form.input :dept_org_id, as: :select, collection: @departments.map{|x|[x.org_name, x.id, data: { parent_org_id: x.parent_org_id }]}, input_html: { class: "select_department", col: 2 } %>
+</div>
+
+<div id = "custom_field">
+  <%= render partial: 'form_user_custom_fields', locals: {form: form} %>
+</div>

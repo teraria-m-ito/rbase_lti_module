@@ -1,0 +1,37 @@
+<%= turbo_frame_tag 'entry-forms' do %>
+  <%= simple_fields_for @condition do |form| %>
+    <div class="form-group form-inline input-group-sm align-items-start">
+      <%= form.input :operated_at_from, input_html: {type: 'date', col: 2} %>
+      <%= form.input :operated_time_at_from, label: false, input_html: {col: 2} %>
+    </div>
+    <div class="form-group form-inline input-group-sm align-items-start">
+      <%= form.input :operated_at_to, input_html: {type: 'date', col: 2} %>
+      <%= form.input :operated_time_at_to, label: false, input_html: {col: 2} %>
+    </div>
+    <div class="form-group form-inline input-group-sm align-items-start">
+      <%= form.input :user_id, input_html: {col: 3} %>
+      <%= form.input :user_name, input_html: {col: 3} %>
+    </div>
+    
+    <div class="form-group form-inline input-group-sm align-items-start">
+      <%= form.input :institution, as: :select, collection: @institutions.map{|x|[x.org_name, x.id]}, input_html: {col: 3} %>
+      <%= form.input :department, as: :select, collection: @departments.map{|x|[x.org_name, x.id]}, input_html: {col: 5} %>
+    </div>
+    
+    <div class="form-group form-inline input-group-sm align-items-start">
+      <%= form.input :form_type, as: :check_boxes,
+                     collection: form.object.class.form_type_options,
+                     item_wrapper_class: "form-check-inline",
+                     checked: form.object.form_type.nil? ? [] : form.object.form_type
+      %>
+    </div>
+
+    <div class="form-group form-inline input-group-sm align-items-start">
+      <%= form.input :operation_div, as: :check_boxes,
+                     collection: form.object.class.operation_div_options,
+                     item_wrapper_class: "form-check-inline",
+                     checked: form.object.operation_div.nil? ? [] : form.object.operation_div
+      %>
+    </div>
+  <% end %>
+<% end %>

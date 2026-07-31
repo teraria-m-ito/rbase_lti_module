@@ -1,0 +1,15 @@
+<%= turbo_frame_tag 'entry-forms' do %>
+  <%= simple_fields_for @condition do |form| %>
+    <div class="form-group form-inline input-group-sm align-items-start">
+      <%= form.input :import_type, as: :select, collection: ::LTI::ImportHistories::SearchConditions.import_type_options, input_html: {col: 3} %>
+    </div>
+    <div class="form-group form-inline input-group-sm align-items-start">
+      <%= form.input :operated_at_from, input_html: {type: 'date', col:2, style: "max-width: 8rem;"} %>
+      <%= form.input :operated_time_at_from, label: false, input_html: {col: 1} %>
+    </div>
+    <div class="form-group form-inline input-group-sm align-items-start">
+      <%= form.input :operated_at_to, input_html: {type: 'date', col: 2, style: "max-width: 8rem;"} %>
+      <%= form.input :operated_time_at_to, label: false, input_html: {col: 1} %>
+    </div>
+  <% end %>
+<% end %>

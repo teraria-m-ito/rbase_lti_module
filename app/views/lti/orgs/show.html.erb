@@ -1,0 +1,37 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1><%= t(:"views.lti.orgs.show.title")%></h1>
+        <small><%= t(:"views.lti.orgs.show.header_guide")%></small>
+      </div>
+      <div class="col-sm-6">
+        <div class="float-sm-right">
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<section class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-12">
+        <%= simple_form_for(@lti_org) do |f| %>
+          <div class="card">
+            <div class="card-body">
+              <%= f.error_notification %>
+              <div class="form-group">
+                <%= render partial: 'form', locals: {form: f} %>
+              </div>
+            </div>
+            <div class="card-footer">
+              <%= link_to t(:"views.lti.orgs.show.button_cancel"), lti_orgs_path, class: "btn btn-default btn-sm btn-sm" %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</section>
+
+

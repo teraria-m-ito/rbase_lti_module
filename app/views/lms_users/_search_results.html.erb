@@ -1,0 +1,32 @@
+<%= page_entries_info @lms_users %>
+
+<table class="table table-hover table-striped table-sm">
+<% unless @lms_users.empty? %>
+  <thead class="thead-dark">
+    <tr>
+      <th class="col-md-1"><%= t(:"views.lms_users.fields.site_name")%></th>
+      <th class="col-md-2"><%= t(:"views.lms_users.fields.username")%></th>
+      <th class="col-md-2"><%= t(:"views.lms_users.fields.name")%></th>
+      <th class="col-md-1"><%= t(:"views.lms_users.fields.role")%></th>
+      <th class="col-md-4"><%= t(:"views.lms_users.fields.email")%></th>
+      <th class="col-md-1"><%= t(:"views.lms_users.fields.action")%></th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @lms_users.each do |lms_user|%>
+      <tr>
+        <td><%= lms_user.sites.map(&:site_name).join("<br />").html_safe %></td>
+        <td><%= link_to lms_user.username, lms_user_path(lms_user) %></td>
+        <td><%= lms_user.name %></td>
+        <td><%= lms_user.role %></td>
+        <td><%= lms_user.email %></td>
+        <td>
+          <%= link_to t(:"views.lms_users.index.table_lms_users.button_edit"), edit_lms_user_path(lms_user, clear: true), class: "btn btn-primary btn-sm" %>
+          <%= link_to t(:"views.lms_users.index.table_lms_users.button_destroy"), lms_user_path(lms_user), data: { turbo_method: :delete, turbo_confirm: t(:"views.common.destroy_confirm_message") }, class: "btn btn-danger btn-sm"%>
+        </td>
+      </tr>
+    <% end %> 
+  </tbody>
+<% end %>
+</table>
+<%= paginate @lms_users %>

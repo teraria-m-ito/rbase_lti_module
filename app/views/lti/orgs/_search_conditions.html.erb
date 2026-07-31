@@ -1,0 +1,12 @@
+<%= turbo_frame_tag 'entry-forms' do %>
+  <%= simple_fields_for @condition do |form| %>
+    <div class="form-group form-inline input-group-sm align-items-start">
+      <%= form.input :org_cd, input_html: {col: 3}%>
+      <%= form.input :org_name, input_html: {col: 5}%>
+    </div>
+    <div class="form-group form-inline input-group-sm align-items-start">
+      <%= form.input :org_div, as: :select, collection: ::LTIOrg.org_div_options, input_html: {col: 3} %>
+      <%= form.input :parent_org_id, as: :select, collection: ::LTIOrg.parent_list.map{|x|[x.org_name, x.id]}, input_html: {col: 3} %>
+    </div>
+  <% end %>
+<% end %>

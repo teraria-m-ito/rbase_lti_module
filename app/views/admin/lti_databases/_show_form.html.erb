@@ -1,0 +1,33 @@
+<div class="form-group form-inline input-group-sm align-items-start">
+  <%= form.input :site_ids, as: :check_boxes,
+                 collection: @sites.map{|x| [x.site_name,x.id]},
+                 item_wrapper_class: "form-check-inline"
+  %>
+</div>
+<div class="form-group form-inline input-group-sm align-items-start">
+  <%= form.input :name, input_html: {col: 5} %>
+</div>
+<div class="form-group form-inline input-group-sm align-items-start">
+  <%= form.input :iss, input_html: {col: 7} %>
+</div>
+<div class="form-group form-inline input-group-sm align-items-start">
+  <%= form.input :client_id, input_html: {col: 5} %>
+</div>
+<div class="form-group form-inline input-group-sm align-items-start">
+  <%= form.input :auth_login_url, as: :string, input_html: {col: 7} %>
+</div>
+<div class="form-group form-inline input-group-sm align-items-start">
+  <%= form.input :auth_token_url, as: :string, input_html: {col: 7} %>
+</div>
+<div class="form-group form-inline input-group-sm align-items-start">
+  <%= form.input :key_set_url, as: :string, input_html: {col: 7} %>
+</div>
+<div class="form-group form-inline input-group-sm align-items-start">
+  <%= form.input :private_key_file, as: :text, input_html: {col:8, rows: 5} %>
+</div>
+<div class="form-group form-inline input-group-sm align-items-start">
+  <%= form.input :kid, input_html: {col: 5} %>
+</div>
+<div class="form-group form-inline input-group-sm align-items-start">
+  <%= form.input :deployment_json %>
+</div>

@@ -1,0 +1,51 @@
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1><%= t(:"views.lti_databases.index.title")%></h1>
+      </div>
+      <div class="col-sm-6">
+        <div class="float-sm-right">
+          <%= link_to t(:"views.lti_databases.index.button_new"), new_admin_lti_database_path, class: "btn btn-primary btn-sm" %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="card">
+          <div class="card-title"></div>
+          <%= simple_form_for @condition, url: admin_lti_databases_path, method: :get do |f| %>
+            <div class="card-body">
+              <%= f.error_notification %>
+              <div class="form-group">
+                <%= render partial: 'search_conditions', locals: {form: f} %>
+              </div>
+            </div>
+            <div class="card-footer">
+              <%= f.submit t(:"views.lti_databases.index.button_search"), class: "btn btn-primary btn-sm"%>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+    <% unless @lti_databases.nil? %>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card">
+            <div class="card-title"></div>
+            <div class="card-title"></div>
+              <div class="card-body">
+                <%= render partial: 'search_results' %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</section>

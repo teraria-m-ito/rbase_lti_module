@@ -1,0 +1,19 @@
+PATH
+  remote: .
+  specs:
+    rbase_lti_module (0.1.0)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    rake (13.2.1)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  rake (~> 13.0)
+  rbase_lti_module!
+
+BUNDLED WITH
+   2.3.23

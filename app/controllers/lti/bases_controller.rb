@@ -378,9 +378,20 @@ module Lti
 
     private
     def allow_iframe
-      url = ENV["LMS_HOST"] || (current_lms_user.present? ? current_lms_user.lms : "https://lti.example.com")
-      response.headers['X-Frame-Options'] = "ALLOW-FROM #{url}"
-      response.headers['Content-Security-Policy'] = "frame-ancestors #{url}"
+      # LMS_HOST はカンマ区切りで複数指定可（CSP frame-ancestors は空白区切り）
+      hosts =
+        if ENV["LMS_HOST"].present?
+          ENV["LMS_HOST"].split(",").map(&:strip).reject(&:blank?)
+        elsif current_lms_user.present? && current_lms_user.lms.present?
+          [current_lms_user.lms]
+        else
+          ["https://lti.example.com"]
+        end
+      ancestors = hosts.join(" ")
+      # X-Frame-Options の ALLOW-FROM は単一URLのみ（非推奨）。複数時は CSP を優先
+      response.headers["X-Frame-Options"] = "ALLOW-FROM #{hosts.first}" if hosts.size == 1
+      response.headers.delete("X-Frame-Options") if hosts.size > 1
+      response.headers["Content-Security-Policy"] = "frame-ancestors #{ancestors}"
     end
     
     def lti_default_post_launch_path

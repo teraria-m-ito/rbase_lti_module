@@ -7,6 +7,8 @@ module Api
     class LtiToolRegisterController < ::Api::BasesController
       include ApiCommon
 
+      layout false
+
       protect_from_forgery except: :new
 
       def new

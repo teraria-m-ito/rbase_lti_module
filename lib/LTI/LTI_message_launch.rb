@@ -280,6 +280,7 @@ module LTI
     def validate_deployment
       # Find deployment.
       # deployment = @db.find_deployment(@jwt['body']['iss'], @jwt['body']['https://purl.imsglobal.org/spec/lti/claim/deployment_id'])
+      Rails.logger.info("iss:#{@jwt['body']['iss']}, aud:#{@jwt['body']['aud']}, deployment_id:#{@jwt['body']['https://purl.imsglobal.org/spec/lti/claim/deployment_id']}")
       deployment = @db.find_deployment_by_iss_and_client_id(@jwt['body']['iss'], @jwt['body']['aud'], @jwt['body']['https://purl.imsglobal.org/spec/lti/claim/deployment_id'])
       
       unless deployment

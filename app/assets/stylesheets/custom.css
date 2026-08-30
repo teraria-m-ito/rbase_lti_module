@@ -65,17 +65,6 @@ p.rubric_define_error {
 /*    padding-top: 44px !important; */
 }
 
-@media (min-width: 1052px) {
-    .admin_sub_menu {
-        top: 33px !important;
-    }
-}
-@media (max-width: 1051px) {
-    .admin_sub_menu {
-        top: 56px !important;
-    }
-}
-
 /* 2段目の細かい見た目（任意） */
 .admin_sub_menu {
     border-bottom: 1px solid #dee2e6;
@@ -83,6 +72,25 @@ p.rubric_define_error {
     font-size: small;
     padding-top: 0.5rem !important;
     padding-bottom: 4px !important;
+    /* 上部メニューの実高さに合わせる（canvas_admin_common.js が --canvas-admin-top-menu-height を更新） */
+    top: var(--canvas-admin-top-menu-height, 33px) !important;
+}
+
+/* タブが折り返してコンテンツ見出しと重ならないよう横スクロール */
+.admin_sub_menu .nav-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+
+.admin_sub_menu .nav-tabs .nav-item {
+    flex-shrink: 0;
+}
+
+.admin_sub_menu .nav-tabs .nav-link {
+    white-space: nowrap;
 }
 
 .admin_sub_menu a.nav-link:not(.active) {

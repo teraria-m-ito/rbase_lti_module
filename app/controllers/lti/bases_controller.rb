@@ -96,10 +96,10 @@ module Lti
           if session[:lti_custom_params] and session[:lti_custom_params]["forced_role"]
             role = session[:lti_custom_params]["forced_role"]
             lti_role = ::LmsUser.role_entries.select{|x| x[:id].to_s == role}.first
-            lms_user.role = lti_role[:role_name] unless lti_role.nil?
+            lms_user.role = lti_role[:id] unless lti_role.nil?
           else
             unless lms_user.role
-              lms_user.role = lti_role[:role_name] unless lti_role.nil?
+              lms_user.role = lti_role[:id] unless lti_role.nil?
             end
           end
 

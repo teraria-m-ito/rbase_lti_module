@@ -68,21 +68,50 @@ class LmsUser < ApplicationRecord
     entry 'LEARNER', "http://purl.imsglobal.org/vocab/lis/v2/membership#Learner", 'Learner', role_name: "STUDENT", role_div: "student", prio: 9
   end
 
+  def self.normalize_lti_role_uri(uri)
+    uri.to_s.strip.sub(/\Ahttp:/i, "https:")
+  end
+
   def self.select_lti_role(roles)
     return nil if roles.blank?
+
     prio = 0
     result = nil
     roles.each do |role|
-      target = ::LmsUser.role_enum.select{|x| x.key == role}.first
-      unless :target.nil?
-        if prio < target[:prio]
-          result = target
-          prio = target[:prio]
-        end
+      normalized = normalize_lti_role_uri(role)
+      target = ::LmsUser.role_enum.find { |x| normalize_lti_role_uri(x.key) == normalized }
+      next if target.nil?
+
+      if prio < target[:prio]
+        result = target
+        prio = target[:prio]
       end
     end
     result
   end
+
+  def admin_role_id_for_lti(default_role_div)
+    candidates = []
+    entry = self.role_entry
+    if entry.present?
+      candidates << entry[:role_name].to_s if entry[:role_name].present?
+      case entry[:role_div].to_s
+      when "student"
+        candidates << "STUDENT"
+      when "teacher", "admin"
+        candidates << "TEACHER"
+      end
+    end
+    candidates << default_role_div.to_s if default_role_div.present?
+    candidates.concat(%w[STUDENT TEACHER member])
+    candidates.map(&:strip).reject(&:blank?).uniq.each do |short_name|
+      role = ::Role.find_by(role_short_name: short_name)
+      return role.id if role
+    end
+
+    raise "Role not found for LMS user (role=#{self.role.inspect})"
+  end
+
   def create_admin_user(role_update = false)
     admin_user = ::AdminUser.where(email: self.email).first
     admin_user = admin_user || ::AdminUser.where(name: self.username).first
@@ -99,24 +128,10 @@ class LmsUser < ApplicationRecord
 
     role_div = ::SystemSetting.get_setting(:default_role_div,admin_user.site_ids.first)
     if role_update
-      if self.role.present?
-        admin_user.role_id = ::Role.where(role_short_name: self.role_entry[:role_name]).first.id
-      else
-        admin_user.role_id = ::Role.where(role_short_name: role_div).first.id
-      end
-    else
-      if self.role_entry[:role_name]
-        admin_user.role_id = ::Role.where(role_short_name: self.role_entry[:role_name]).first.id if admin_user.role.blank?
-      else
-        admin_user.role_id = ::Role.where(role_short_name: role_div).first.id
-      end
+      admin_user.role_id = admin_role_id_for_lti(role_div)
+    elsif admin_user.role.blank?
+      admin_user.role_id = admin_role_id_for_lti(role_div)
     end
-
-    # if self.role.present? or role_update
-    #   admin_user.role_id = ::Role.where(role_short_name: self.role_entry[:role_name]).first.id
-    # else
-    #   admin_user.role_id = ::Role.where(role_short_name: role_div).first.id
-    # end
 
     admin_user.status_div_key = :accepted
     admin_user.password = SecureRandom.urlsafe_base64 if admin_user.new_record?

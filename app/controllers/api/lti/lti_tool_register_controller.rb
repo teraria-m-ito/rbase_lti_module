@@ -15,15 +15,7 @@ module Api
         @base_url = request.base_url
         @database_name = params[:database_name]
         @tool_name = params[:tool_name] || "LTI"
-        @tool_part_url = params[:app_part_url]
-        if params[:custom_params]
-          @custom_params = params[:custom_params].to_a.split(",").map { |pair|
-            key, value = pair.split("=")
-            [key, value]
-          }.to_h
-        else
-          @custom_params = {}
-        end
+        assign_tool_part_url_and_custom_params!
 
         if @database_name.blank?
           return render status: :bad_request, plain: 'missing database_name'
@@ -93,6 +85,42 @@ module Api
       end
 
       private
+
+      # app_part_url は LTI エンドポイント用パス（例: ldi/dashboard）。
+      # クエリ文字列が付いている場合は custom_parameters へ取り込む。
+      def assign_tool_part_url_and_custom_params!
+        raw = params[:app_part_url].to_s.strip
+        @custom_params = parse_custom_params_param(params[:custom_params])
+
+        path_part = raw
+        if raw.include?("?")
+          path_part, query_part = raw.split("?", 2)
+          URI.decode_www_form(query_part).each do |key, value|
+            next if key == "clear"
+            next if value.blank?
+
+            @custom_params[key] = value
+          end
+        end
+
+        @tool_part_url = normalize_tool_part_path(path_part)
+      end
+
+      def normalize_tool_part_path(path)
+        path.to_s.strip.sub(%r{\A/}, "").sub(%r{/index\z}, "")
+      end
+
+      def parse_custom_params_param(raw)
+        return {} if raw.blank?
+
+        raw.to_s.split(",").each_with_object({}) do |pair, h|
+          key, value = pair.split("=", 2)
+          next if key.blank?
+
+          h[key] = value.to_s
+        end
+      end
+
       def fetch_json(url)
         Rails.logger.debug("[fetch_json]url:#{url}")
         uri = URI.parse(url)

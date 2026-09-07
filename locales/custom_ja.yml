@@ -13,6 +13,7 @@ ja:
 
     lms_user_imports: "管理/LMSユーザインポート"
     lms_user_import_attachments: "管理/LMSユーザインポートアップロード"
+    import_base_histories: "管理/インポート履歴"
 
     lti/bases: "LTI/共通/ベースコントローラ"
     lti/admin_bases: "LTI/管理者/管理者ベースコントローラ"
@@ -72,6 +73,8 @@ ja:
           index: "組織"
       lms_users:
         index: "LMSユーザ"
+      import_base_histories:
+        index: "インポート履歴"
     admin:
       lti_databases: "LTIデータベース"
 

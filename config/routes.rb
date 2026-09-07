@@ -27,6 +27,8 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :import_base_histories
+
   namespace :lti do
 
     #マスタ系

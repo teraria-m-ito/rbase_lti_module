@@ -12,5 +12,6 @@ Rbase::PluginModule.register(
   "RbaseLtiModule::CustomFieldExt",
   "RbaseLtiModule::ApplicationHelperExt",
   "RbaseLtiModule::TopHelperExt",
+  "RbaseLtiModule::UserApplicationControllerExt",
   "RbaseLtiModule::AdminUsers::SessionsControllerExt",
 )

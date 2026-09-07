@@ -1,5 +1,9 @@
 module RbaseLtiModule
   module UserApplicationControllerExt
+    def current_lms_user
+      session[:current_lms_user]
+    end
+
     def index_with_rbase_lti_modulle
       case @sso_type
       when "saml2" then

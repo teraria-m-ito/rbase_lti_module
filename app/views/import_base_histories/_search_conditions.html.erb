@@ -1,7 +1,7 @@
 <%= turbo_frame_tag 'entry-forms' do %>
   <%= simple_fields_for @condition do |form| %>
     <div class="form-group form-inline input-group-sm align-items-start">
-      <%= form.input :import_type, as: :select, collection: ::LTI::ImportHistories::SearchConditions.import_type_options, input_html: {col: 3} %>
+      <%= form.input :import_type, as: :select, collection: ::LTI::ImportHistories::SearchConditions.import_type_entries.select{|x|x[:base] == true}.map{|x|[x.name, x.id]}, input_html: {col: 3} %>
     </div>
     <div class="form-group form-inline input-group-sm align-items-start">
       <%= form.input :operated_at_from, as: :datetime_local, input_html: {type: "datetime-local", col: 2} %>

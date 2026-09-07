@@ -170,7 +170,12 @@ class LmsUsersController < CustomUserApplicationController
     role = ::Role.where(role_short_name: role_name).first
     admin_user.role = role
     admin_user.sites = @lms_user.sites
-    admin_user.password = SecureRandom.urlsafe_base64 if admin_user.new_record?
+    if @lms_user.password.present? || @lms_user.password_confirmation.present?
+      admin_user.password = @lms_user.password
+      admin_user.password_confirmation = @lms_user.password_confirmation
+    elsif admin_user.new_record?
+      admin_user.password = SecureRandom.urlsafe_base64
+    end
   end
 
   def set_lms_user_custom_fields

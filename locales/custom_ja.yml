@@ -150,6 +150,8 @@ ja:
         family_name: "姓"
         email: "email"
         role: "権限"
+        password: "パスワード"
+        password_confirmation: "パスワード確認"
         lms: "登録元LMS"
         inst_org_id: "学部"
         dept_org_id: "学科科"

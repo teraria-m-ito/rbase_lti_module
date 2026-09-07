@@ -150,6 +150,8 @@ en:
         family_name: "Family name"
         email: "email"
         role: "Role"
+        password: "Password"
+        password_confirmation: "Password confirmation"
         lms: "Source LMS"
         inst_org_id: "Faculty"
         dept_org_id: "Department"

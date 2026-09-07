@@ -8,6 +8,9 @@ class LmsUser < ApplicationRecord
 
   belongs_to :admin_user, class_name: '::AdminUser', optional: true
 
+  # AdminUser のパスワード変更用（lms_users には保存しない）
+  attr_accessor :password, :password_confirmation
+
   belongs_to :lti_org, class_name: '::LTIOrg', foreign_key: 'lti_org_id', optional: true
   belongs_to :inst_lti_org, class_name: '::LTIOrg', foreign_key: 'inst_org_id', optional: true
   belongs_to :dept_lti_org, class_name: '::LTIOrg', foreign_key: 'dept_org_id', optional: true

@@ -25,7 +25,7 @@ export default class extends RbaseController {
     
     RbaseLtiModuleCommon.initSelectInstDept();
     RbaseLtiModuleCommon.selectInstDept();
-    
+    this.bindPasswordToggle();
   }
   
   edit() {
@@ -38,6 +38,33 @@ export default class extends RbaseController {
     
     RbaseLtiModuleCommon.initSelectInstDept();
     RbaseLtiModuleCommon.selectInstDept();
+    this.bindPasswordToggle();
+  }
+
+  bindPasswordToggle() {
+    $("#toggle-password").on('click', function() {
+      if ($('#lms_user_password').attr('type') == 'password') {
+        $('#lms_user_password').attr('type','text');
+        $(this).removeClass('bi-eye-slash');
+        $(this).addClass('bi-eye');
+      } else {
+        $('#lms_user_password').attr('type','password');
+        $(this).removeClass('bi-eye');
+        $(this).addClass('bi-eye-slash');
+      }
+    });
+
+    $("#toggle-password-confirm").on('click', function() {
+      if ($('#lms_user_password_confirmation').attr('type') == 'password') {
+        $('#lms_user_password_confirmation').attr('type','text');
+        $(this).removeClass('bi-eye-slash');
+        $(this).addClass('bi-eye');
+      } else {
+        $('#lms_user_password_confirmation').attr('type','password');
+        $(this).removeClass('bi-eye');
+        $(this).addClass('bi-eye-slash');
+      }
+    });
   }
   
   show() {

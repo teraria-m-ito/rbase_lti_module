@@ -13,8 +13,6 @@ class LTIImportHistory < ApplicationRecord
 
   selectable_attr :target_type do
     entry 'LmsUserImport', :lms_user_imports, 'LMSユーザ'
-    entry 'LTIReflectionParticipantImport', :lti_reflection_participant_imports, '振り返り参加者'
-    entry 'LTIShowcaseParticipantImport', :lti_showcase_participant_imports, 'ショーケース参加者'
   end
 
   def import_type_name
@@ -27,10 +25,6 @@ class LTIImportHistory < ApplicationRecord
     case self.target_type_key
     when :lms_user_imports
       result = self.target.lms_user_import_attachments.first.try(:filename)
-    when :lti_reflection_participant_imports
-      result = self.target.lti_reflection_participant_import_attachments.first.try(:filename)
-    when :lti_showcase_participant_imports
-      result = self.target.lti_showcase_participant_import_attachments.first.try(:filename)
     end
 
     result
@@ -56,10 +50,6 @@ class LTIImportHistory < ApplicationRecord
     case self.target_type_key
     when :lms_user_imports
       result = self.target.lms_user_import_errors
-    when :lti_reflection_participant_imports
-      result = self.target.lti_reflection_participant_import_errors
-    when :lti_showcase_participant_imports
-      result = self.target.lti_showcase_participant_import_errors
     end
     result
   end

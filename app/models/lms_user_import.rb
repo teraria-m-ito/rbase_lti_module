@@ -33,7 +33,7 @@ class LmsUserImport < ApplicationRecord
     lms_users = condition.search
 
     header = %w(
-        編集区分 ユーザID ユーザ名 名 姓 メールアドレス 登録元LMS 権限 学部 学科
+        編集区分 サイト名 ユーザID ユーザ名 名 姓 メールアドレス 登録元LMS 権限 学部 学科
     )
 
     custom_fields = ::CustomField.where(custom_field_type: ::CustomField.custom_field_type_id_by_key(:lms_user)).order(:display_order)
@@ -46,15 +46,16 @@ class LmsUserImport < ApplicationRecord
       role_name = lms_user.role #::Role.where(role_short_name: lms_user.role).first.try(:role_name)
       form_column_value = [
         LmsUserImportRow.edit_div_id_by_key(:edit),       #1:編集区分
-        lms_user.username,                                #2:ユーザID
-        lms_user.name,                                    #3:ユーザ名
-        lms_user.given_name,                              #4:名
-        lms_user.family_name,                             #5:姓
-        lms_user.email,                                   #6:メールアドレス
-        lms_user.lms,                                     #7:登録元LMS
-        role_name,                                        #8:権限
-        institution,                                      #9:学部
-        department                                       #10:学科
+        lms_user.sites.pluck(:site_name).join(","),       #2:サイト名
+        lms_user.username,                                #3:ユーザID
+        lms_user.name,                                    #4:ユーザ名
+        lms_user.given_name,                              #5:名
+        lms_user.family_name,                             #6:姓
+        lms_user.email,                                   #7:メールアドレス
+        lms_user.lms,                                     #8:登録元LMS
+        role_name,                                        #9:権限
+        institution,                                      #10:学部
+        department                                       #11:学科
       ]
       custom_fields.each do |custom_field|
         form_column_value << lms_user.send(custom_field.field_name)
@@ -94,21 +95,24 @@ class LmsUserImport < ApplicationRecord
     filepath = self.lms_user_import_attachments[0].document.path
     xlsx = Roo::Excelx.new(filepath)
     xlsx.default_sheet = xlsx.sheets[0]
+    available_site_ids = current_admin_user&.site_ids || []
     2.upto(xlsx.last_row) do |r_num|
       row = xlsx.row(r_num)
       lms_user_import_row = ::LmsUserImportRow.new
       lms_user_import_row.edit_div = row[0]                 #編集区分
-      lms_user_import_row.username = row[1].to_s            #ユーザID
-      lms_user_import_row.name = row[2]                     #ユーザ名
-      lms_user_import_row.given_name = row[3]               #名
-      lms_user_import_row.family_name = row[4]              #姓
-      lms_user_import_row.email = row[5]                    #メールアドレス
-      lms_user_import_row.lms = row[6]                      #登録元LMS
+      lms_user_import_row.site_name = row[1].to_s            #サイト名
+      lms_user_import_row.available_site_ids = available_site_ids
+      lms_user_import_row.username = row[2].to_s            #ユーザID
+      lms_user_import_row.name = row[3]                     #ユーザ名
+      lms_user_import_row.given_name = row[4]               #名
+      lms_user_import_row.family_name = row[5]              #姓
+      lms_user_import_row.email = row[6]                    #メールアドレス
+      lms_user_import_row.lms = row[7]                      #登録元LMS
 
-      lms_user_import_row.role = row[7]                     #権限
+      lms_user_import_row.role = row[8]                     #権限
 
-      lms_user_import_row.institution = row[8]              #学部
-      lms_user_import_row.department = row[9]               #学科
+      lms_user_import_row.institution = row[9]              #学部
+      lms_user_import_row.department = row[10]               #学科
 
       #組織IDの設定
       if lms_user_import_row.institution.present? and lms_user_import_row.department.present?
@@ -120,7 +124,7 @@ class LmsUserImport < ApplicationRecord
 
       custom_fields = ::CustomField.where(custom_field_type: ::CustomField.custom_field_type_id_by_key(:lms_user)).order(:display_order)
       custom_fields.each_with_index do |custom_field, i|
-        cell = row[10 + i]
+        cell = row[11 + i]
         lms_user_import_row.send("#{custom_field.field_name}=", cell.nil? ? nil : cell.to_s)
       end
 
@@ -180,61 +184,48 @@ class LmsUserImport < ApplicationRecord
   def save_lms_users
     ::Rails.logger.info("[LMSユーザインポート]開始")
 
-    #インポート行の内、フォーム処理行から処理を行う
-    @lms_user_import_rows.each_with_index do |lms_user_import_row, index|
-      case lms_user_import_row.edit_div_key
-      when :add then
-        ::Rails.logger.info("[LMSユーザインポート](#{index+1}/#{@lms_user_import_rows.size})ADD:#{lms_user_import_row.username}")
-        lms_user = ::LmsUser.new
-        LMS_USER_ATTR.each do |attr|
-          lms_user.send("#{attr}=", lms_user_import_row.send(attr.to_sym))
-        end
-        self.class.apply_lms_user_custom_fields_from_import_row(lms_user, lms_user_import_row)
+    ::LmsUser.transaction do
+      available_sites = ::Site.where(id: current_admin_user&.site_ids || [])
 
-        #学科設定
-        lms_user.dept_org_id = lms_user.lti_org_id
+      #インポート行の内、フォーム処理行から処理を行う
+      @lms_user_import_rows.each_with_index do |lms_user_import_row, index|
+        case lms_user_import_row.edit_div_key
+        when :add, :edit
+          operation = lms_user_import_row.edit_div_key.to_s.upcase
+          ::Rails.logger.info("[LMSユーザインポート](#{index+1}/#{@lms_user_import_rows.size})#{operation}:#{lms_user_import_row.username}")
+          lms_user =
+            if lms_user_import_row.edit_div_key == :add
+              ::LmsUser.new
+            else
+              ::LmsUser.find_by!(username: lms_user_import_row.username)
+            end
+          LMS_USER_ATTR.each do |attr|
+            lms_user.send("#{attr}=", lms_user_import_row.send(attr.to_sym))
+          end
+          self.class.apply_lms_user_custom_fields_from_import_row(lms_user, lms_user_import_row)
 
-        #学部設定
-        lms_user.inst_org_id = lms_user.lti_org.parent_institution.id if lms_user.lti_org
+          # サイト名からサイトを設定（ADD・EDIT共通）
+          sites_by_name = available_sites.where(site_name: lms_user_import_row.site_names).index_by(&:site_name)
+          lms_user.sites = lms_user_import_row.site_names.map { |site_name| sites_by_name.fetch(site_name) }
 
-        lti_database = ::LTIDatabase.where(iss: lms_user_import_row.lms).first
-        site_ids = lti_database.site_ids
-        lms_user.site_ids = site_ids
+          #学科設定
+          lms_user.dept_org_id = lms_user.lti_org_id
 
-        lms_user.save!
-        admin_user = lms_user.create_admin_user_for_import
-        lms_user.admin_user_id = admin_user.id
-        lms_user.save!
+          #学部設定
+          lms_user.inst_org_id = lms_user.lti_org&.parent_institution&.id
 
-      when :edit then
-        ::Rails.logger.info("[LMSユーザインポート](#{index+1}/#{@lms_user_import_rows.size})EDIT:#{lms_user_import_row.username}")
-        lms_user = ::LmsUser.where(username: lms_user_import_row.username).first
-        LMS_USER_ATTR.each do |attr|
-          lms_user.send("#{attr}=", lms_user_import_row.send(attr.to_sym))
-        end
-        self.class.apply_lms_user_custom_fields_from_import_row(lms_user, lms_user_import_row)
-
-        #学科設定
-        lms_user.dept_org_id = lms_user.lti_org_id
-
-        #学部設定
-        lms_user.inst_org_id = lms_user.lti_org.parent_institution.id if lms_user.lti_org
-
-        lti_database = ::LTIDatabase.where(iss: lms_user_import_row.lms).first
-        site_ids = lti_database.site_ids
-        lms_user.site_ids = site_ids
-
-        lms_user.save!
-        admin_user = lms_user.create_admin_user_for_import
-
-        if lms_user.admin_user_id.nil?
-          lms_user.admin_user_id = admin_user.id
           lms_user.save!
+          admin_user = lms_user.create_admin_user_for_import
+
+          if lms_user.admin_user_id.nil?
+            lms_user.admin_user_id = admin_user.id
+            lms_user.save!
+          end
+        when :del
+          ::Rails.logger.info("[LMSユーザインポート](#{index+1}/#{@lms_user_import_rows.size})DEL:#{lms_user_import_row.username}")
+          lms_user = ::LmsUser.find_by!(username: lms_user_import_row.username)
+          raise "fail destroy #{lms_user.username}" unless lms_user.destroy_lms_user
         end
-      when :del then
-        ::Rails.logger.info("[LMSユーザインポート](#{index+1}/#{@lms_user_import_rows.size})DEL:#{lms_user_import_row.username}")
-        lms_user = ::LmsUser.where(username: lms_user_import_row.username).first
-        raise "fail destroy #{lms_user.username}" unless lms_user.destroy_lms_user
       end
     end
     ::Rails.logger.info("[LMSユーザインポート]終了")

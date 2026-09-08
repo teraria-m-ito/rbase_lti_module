@@ -3,6 +3,8 @@ class LmsUserImportRow
   include ActiveModel::Model
   include LmsUserImportRowCustomFieldAccessors
 
+  attr_accessor :site_name
+  attr_accessor :available_site_ids
   attr_accessor :username
   attr_accessor :name
   attr_accessor :given_name
@@ -26,17 +28,24 @@ class LmsUserImportRow
   validates :edit_div, presence: true
   validates :edit_div, inclusion: {in: ::LmsUserImportRow.edit_div_ids}
 
+  validates :site_name, presence: true
+
   validates :username, presence: true
   validates :name, presence: true
   validates :given_name, presence: true, if: Proc.new{|x| x.given_name != '　'}
   validates :family_name, presence: true, if: Proc.new{|x| x.family_name != '　'}
   validates :email, {presence: true, format: { with: /\A[\w+\-.]+@[a-z\d\-.]+\.[a-z]+\z/i }}
 
-  validates :lms, presence: true
+  # validates :lms, presence: true
   validates :role, presence: true
+  validates :role, inclusion: {in: ::LmsUser.role_ids}
 
   #  全体の検証
   validate :validate_csv
+
+  def site_names
+    site_name.to_s.split(",").map(&:strip).reject(&:blank?).uniq
+  end
 
   def validate_csv
     #登録系区分の確認
@@ -52,6 +61,17 @@ class LmsUserImportRow
     elsif [:edit, :del].include?(self.edit_div_key)
       unless ::LmsUser.where(username: self.username).first
         self.errors.add(:username, I18n.t(:"views.lms_user_imports.messages.no_exists_username"))
+      end
+    end
+
+    # サイト名の確認（カンマ区切りで複数指定可）
+    if site_name.present?
+      if site_names.empty?
+        errors.add(:site_name, I18n.t(:"activerecord.errors.messages.blank"))
+      elsif (site_names - ::Site.where(site_name: site_names).pluck(:site_name)).any?
+        errors.add(:site_name, I18n.t(:"activerecord.errors.messages.invalid_attribute"))
+      elsif (site_names - ::Site.where(id: Array(available_site_ids), site_name: site_names).pluck(:site_name)).any?
+        errors.add(:site_name, I18n.t(:"activerecord.errors.messages.site_not_accessible"))
       end
     end
 

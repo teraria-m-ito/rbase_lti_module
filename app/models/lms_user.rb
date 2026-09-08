@@ -153,21 +153,8 @@ class LmsUser < ApplicationRecord
     admin_user.name = self.name
     admin_user.site_ids =self.site_ids
 
-    role_divs = admin_user.site_ids.inject([]){|arry, site_id| arry << ::SystemSetting.get_setting(:default_role_div, site_id)}
-    if role_divs.size != 1
-      raise "Must one type role_div each sites."
-    end
-
-    role_div = ::SystemSetting.get_setting(:default_role_div,admin_user.site_ids.first)
-    unless self.role.nil?
-      if ::Role.where(role_short_name: self.role).first
-        admin_user.role_id = ::Role.where(role_short_name: self.role).first.id
-      else
-        admin_user.role_id = ::Role.where(role_short_name: role_div).first.id
-      end
-    else
-      admin_user.role_id = ::Role.where(role_short_name: role_div).first.id
-    end
+    role_name = role_entry[:role_name]
+    admin_user.role = ::Role.find_by!(role_short_name: role_name)
     admin_user.status_div_key = :accepted
     admin_user.password = SecureRandom.urlsafe_base64 if admin_user.new_record?
 

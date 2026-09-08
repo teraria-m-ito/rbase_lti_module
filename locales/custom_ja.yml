@@ -89,6 +89,8 @@ ja:
     attributes:
       admin_users/sso_login_form:
         iss: "LMSサーバ"
+      lms_user_import_row:
+        site_name: "サイト名"
       lti/orgs/search_conditions:
         org_cd: "組織CD"
         org_name: "組織名"
@@ -116,6 +118,7 @@ ja:
         invalid_file_contents: "アップロードしたファイルの内容が正しくありません"
         invalid_inst_depart: "学部／学科の名称もしくは組み合わせが正しくありません"
         invalid_attribute: "は無効です"
+        site_not_accessible: "には操作ユーザが所属するサイトを指定してください"
 
         no_exists_user_attr: "定義済の属性名を指定して下さい"
 

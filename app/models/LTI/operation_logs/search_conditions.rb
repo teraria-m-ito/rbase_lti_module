@@ -32,20 +32,28 @@ module LTI
         end
       end
 
+      validate :validate_operated_at_range
+
       def search
       
         operation_logs = ::LTIOperationLog.all
 
         #操作日時(FROM)
-        if self.operated_at_from.present?
-          operated_time = self.operated_time_at_from.present? ? " #{self.operated_time_at_from}" : " 00:00:00"
-          operation_logs = operation_logs.where("operated_at >= ?", "#{self.operated_at_from}#{operated_time}")
+        if operated_at_from.present?
+          from = parse_operated_at(operated_at_from, legacy_time: operated_time_at_from)
+          operation_logs = operation_logs.where("operated_at >= ?", from) if from
         end
 
         #操作日時(TO)
-        if self.operated_at_to.present?
-          operated_time = self.operated_time_at_to.present? ? " #{self.operated_time_at_to}" : " 23:59:59"
-          operation_logs = operation_logs.where("operated_at <= ?", "#{self.operated_at_to}#{operated_time}")
+        if operated_at_to.present?
+          to = parse_operated_at(operated_at_to, legacy_time: operated_time_at_to, end_of_day: true)
+          if to
+            if operated_at_to.to_s.match?(/\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}\z/)
+              operation_logs = operation_logs.where("operated_at < ?", to + 1.minute)
+            else
+              operation_logs = operation_logs.where("operated_at <= ?", to)
+            end
+          end
         end
 
         #ユーザID
@@ -118,6 +126,30 @@ module LTI
         end
 
         operation_logs
+      end
+
+      private
+
+      def validate_operated_at_range
+        from = parse_operated_at(operated_at_from, legacy_time: operated_time_at_from)
+        to = parse_operated_at(operated_at_to, legacy_time: operated_time_at_to, end_of_day: true)
+
+        errors.add(:operated_at_from, :invalid) if operated_at_from.present? && from.nil?
+        errors.add(:operated_at_to, :invalid) if operated_at_to.present? && to.nil?
+        errors.add(:operated_at_to, :greater_than_or_equal_to, count: operated_at_from) if from && to && to < from
+      end
+
+      def parse_operated_at(value, legacy_time: nil, end_of_day: false)
+        return nil if value.blank?
+
+        raw = value.to_s
+        if raw.match?(/\A\d{4}-\d{2}-\d{2}\z/)
+          time = legacy_time.presence || (end_of_day ? "23:59:59" : "00:00:00")
+          raw = "#{raw} #{time}"
+        end
+        Time.zone.parse(raw)
+      rescue ArgumentError, TypeError
+        nil
       end
     end
   end

@@ -1,4 +1,5 @@
 class LTIImportHistory < ApplicationRecord
+  include ::Rbase::PluginModule::Extendable # 継承を許可する宣言（必須）
   include ::SelectableAttr::Base
 
   before_create :created_userstamp
@@ -13,7 +14,10 @@ class LTIImportHistory < ApplicationRecord
 
   selectable_attr :target_type do
     entry 'LmsUserImport', :lms_user_imports, 'LMSユーザ'
+    update_with_plugins(:LTIImportHistory, :added_entries_for_setting_target_type)
   end
+
+  def self.added_entries_for_setting_target_type(mod); end
 
   def import_type_name
     self.target_type_name

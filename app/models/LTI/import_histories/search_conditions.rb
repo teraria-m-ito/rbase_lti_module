@@ -1,6 +1,7 @@
 module LTI
   module ImportHistories
     class SearchConditions
+      include ::Rbase::PluginModule::Extendable # 継承を許可する宣言（必須）
       include ActiveModel::Model
       include ::SelectableAttr::Base
 

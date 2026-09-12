@@ -20,6 +20,8 @@ en:
     lti/homes: "LTI / Common / Home"
 
     lti/orgs: "LTI / Admin / Organizations"
+    lti/org_imports: "LTI / Admin / Organization import"
+    lti/org_import_attachments: "LTI / Admin / Organization import upload"
 
     lti/operation_logs: "e-Port / Admin / Operation log"
     lti/import_histories: "LTI / Admin / Import history"
@@ -57,6 +59,11 @@ en:
       lti/orgs_update: "Update"
       lti/orgs_destroy: "Delete"
 
+      lti/org_imports_create: "Organization import (register)"
+      lti/org_imports_download: "Organization import (download)"
+      lti_org_imports_download: "Organization import (download)"
+      lti/org_import_attachments_create: "Organization import (upload)"
+
       lti/operation_logs_index: "Search"
 
       lti/import_histories_index: "Search"
@@ -86,6 +93,12 @@ en:
     attributes:
       admin_users/sso_login_form:
         iss: "LMS server"
+      lti_org_import_row:
+        edit_div: "Edit type"
+        parent_org_cd: "Parent org code"
+        org_div_name: "Organization type"
+        org_cd: "Org code"
+        org_name: "Organization name"
       lti/orgs/search_conditions:
         org_cd: "Org code"
         org_name: "Organization name"
@@ -266,6 +279,25 @@ en:
         button_cancel: "Back"
         error_info_title: "Errors"
 
+    lti_org_imports:
+      messages:
+        already_exists: ": When creating, specify an org code that does not already exist."
+        no_exists_org_cd: ": When editing or deleting, specify an existing org code."
+        no_exists_parent_org_cd: ": Specify an existing parent org code."
+        invalid_org_div: ": Organization type is invalid."
+        duplicate_org_cd: ": Org code is duplicated in the same file."
+        cannot_parent_self: ": Cannot specify itself as the parent organization."
+      fields:
+        line_no: "Line"
+        error_message: "Details"
+      new:
+        title: "Bulk upload organizations"
+        header_guide: "Bulk upload organizations."
+        button_download: "Download"
+        button_upload: "Upload"
+        button_cancel: "Back"
+        error_info_title: "Errors"
+
     lti:
       common:
         operation_log:
@@ -291,12 +323,14 @@ en:
           org_name: "Organization name"
           org_div: "Organization type"
           parent_org: "Parent organization"
+          add_file: "Add file..."
           action: "Action"
         index:
           messages:
             no_record: "No organizations found."
           title: "Organizations"
           button_new: "New organization"
+          button_import: "Bulk upload organizations"
           button_search: "Search"
           table_orgs:
             button_edit: "Edit"

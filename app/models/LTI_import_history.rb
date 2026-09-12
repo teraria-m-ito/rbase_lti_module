@@ -14,6 +14,7 @@ class LTIImportHistory < ApplicationRecord
 
   selectable_attr :target_type do
     entry 'LmsUserImport', :lms_user_imports, 'LMSユーザ'
+    entry 'LTIOrgImport', :lti_org_imports, '組織'
     update_with_plugins(:LTIImportHistory, :added_entries_for_setting_target_type)
   end
 
@@ -29,6 +30,8 @@ class LTIImportHistory < ApplicationRecord
     case self.target_type_key
     when :lms_user_imports
       result = self.target.lms_user_import_attachments.first.try(:filename)
+    when :lti_org_imports
+      result = self.target.lti_org_import_attachments.first.try(:filename)
     end
 
     result
@@ -54,6 +57,8 @@ class LTIImportHistory < ApplicationRecord
     case self.target_type_key
     when :lms_user_imports
       result = self.target.lms_user_import_errors
+    when :lti_org_imports
+      result = self.target.lti_org_import_errors
     end
     result
   end

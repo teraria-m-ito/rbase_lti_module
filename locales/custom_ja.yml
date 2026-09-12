@@ -21,6 +21,8 @@ ja:
     lti/homes: "LTI/共通/ホーム"
 
     lti/orgs: "LTI/管理/組織管理"
+    lti/org_imports: "LTI/管理/組織インポート"
+    lti/org_import_attachments: "LTI/管理/組織インポートアップロード"
 
     lti/operation_logs: "eポート/管理/操作ログ"
     lti/import_histories: "LTI/管理/インポート履歴"
@@ -58,6 +60,11 @@ ja:
       lti/orgs_update: "更新"
       lti/orgs_destroy: "削除"
 
+      lti/org_imports_create: "組織インポート登録"
+      lti/org_imports_download: "組織インポートダウンロード"
+      lti_org_imports_download: "組織インポートダウンロード"
+      lti/org_import_attachments_create: "組織インポートアップロード"
+
       lti/operation_logs_index: "検索"
 
       lti/import_histories_index: "検索"
@@ -91,6 +98,12 @@ ja:
         iss: "LMSサーバ"
       lms_user_import_row:
         site_name: "サイト名"
+      lti_org_import_row:
+        edit_div: "編集区分"
+        parent_org_cd: "親組織CD"
+        org_div_name: "組織区分"
+        org_cd: "組織CD"
+        org_name: "組織名"
       lti/orgs/search_conditions:
         org_cd: "組織CD"
         org_name: "組織名"
@@ -272,6 +285,25 @@ ja:
         button_cancel: "戻る"
         error_info_title: "エラー情報"
 
+    lti_org_imports:
+      messages:
+        already_exists: "：作成時は、存在していない組織CDを指定してください"
+        no_exists_org_cd: "：編集、削除時は、存在している組織CDを指定してください"
+        no_exists_parent_org_cd: "：存在している親組織CDを指定してください"
+        invalid_org_div: "：組織区分が正しくありません"
+        duplicate_org_cd: "：同一ファイル内で組織CDが重複しています"
+        cannot_parent_self: "：自身を親組織に指定できません"
+      fields:
+        line_no: "行目"
+        error_message: "内容"
+      new:
+        title: "組織一括アップロード"
+        header_guide: "組織の一括アップロードを行います。"
+        button_download: "ダウンロード"
+        button_upload: "アップロード"
+        button_cancel: "戻る"
+        error_info_title: "エラー情報"
+
     lti:
       common:
         operation_log:
@@ -303,6 +335,7 @@ ja:
             no_record: "該当する組織はありません。"
           title: "組織一覧"
           button_new: "新規組織登録"
+          button_import: "組織一括アップロード"
           button_search: "検索"
           table_orgs:
             button_edit: "編集"

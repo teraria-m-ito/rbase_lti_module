@@ -17,6 +17,7 @@ module LTI
 
       selectable_attr :import_type do
         entry 'LmsUserImport', :lms_user_imports, 'LMSユーザ', base: true
+        entry 'LTIOrgImport', :lti_org_imports, '組織', base: true
       end
 
       validate :validate_operated_at_range

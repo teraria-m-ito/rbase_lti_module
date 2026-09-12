@@ -35,6 +35,17 @@ Rails.application.routes.draw do
     #学部・学科管理
     resources :orgs
 
+    resource :org_imports do
+      collection do
+        get 'download'
+      end
+      resources :org_import_attachments do
+        collection do
+          patch 'create'
+        end
+      end
+    end
+
     # 操作ログ一覧
     resources :operation_logs do
     end

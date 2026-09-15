@@ -7,7 +7,18 @@
           <div class="card-body">
             <%= page_entries_info @lti_operation_logs %>
             <div class="table-responsive is-scroll-pending" id="lti-operation-logs-table-scroll" data-table-scroll-key="lti_operation_logs">
-              <table class="table table-fixed table-hover table-striped table-sm">
+              <table class="table table-fixed table-col-stable table-hover table-striped table-sm">
+                <colgroup>
+                  <col style="width: 10.5rem">
+                  <col style="width: 8rem">
+                  <col style="width: 9rem">
+                  <col style="width: 10rem">
+                  <col style="width: 10rem">
+                  <col style="width: 8rem">
+                  <col style="width: 10rem">
+                  <col style="width: 8rem">
+                  <col>
+                </colgroup>
                 <thead class="thead-dark no_action">
                   <tr>
                     <th><%= table_sort(t(:"views.lti.operation_logs.fields.operated_at"), :operated_at) %></th>

@@ -6,7 +6,7 @@
           <div class="card-title"></div>
           <div class="card-body">
             <%= page_entries_info @lti_operation_logs %>
-            <div class="table-responsive">
+            <div class="table-responsive is-scroll-pending" id="lti-operation-logs-table-scroll" data-table-scroll-key="lti_operation_logs">
               <table class="table table-fixed table-hover table-striped table-sm">
                 <thead class="thead-dark no_action">
                   <tr>
@@ -38,6 +38,7 @@
                 </tbody>
               </table>
             </div>
+            <%= render partial: "common/table_scroll_restore", locals: { element_id: "lti-operation-logs-table-scroll" } %>
             <%= paginate @lti_operation_logs %>
           </div>
         <% else %>

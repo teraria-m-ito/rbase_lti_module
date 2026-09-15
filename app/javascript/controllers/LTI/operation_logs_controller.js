@@ -9,7 +9,6 @@ const FORM_NAME = 'LTI_operation_log';
 export default class extends RbaseController {
   connect() {
     super.connect();
-    Rbase.resetTableXOffset();
   }
   
   index() {
@@ -18,6 +17,7 @@ export default class extends RbaseController {
 
     if (Rbase.getParams('clear') == 'true') {
       Rbase.clearWebStorageFormValue(SEARCH_FORM_NAME);
+      Rbase.clearTableScroll("lti_operation_logs");
     }
     
     Rbase.initValueWebStorageFormValue("#lti_operation_logs_search_conditions", FORM_NAME);
@@ -29,10 +29,7 @@ export default class extends RbaseController {
     
     Rbase.restoreWebStorageFormValueNoTrigger(SEARCH_FORM_NAME);
     
-    setTimeout(function(){
-      Rbase.restoreTableXOffset();
-      Rbase.saveTableXOffset();
-    }, 100);
+    Rbase.bindTableScrollPreserve("lti-operation-logs-table-scroll");
     
     Rbase.showLoading();
     

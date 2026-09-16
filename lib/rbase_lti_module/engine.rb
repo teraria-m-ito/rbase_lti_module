@@ -6,6 +6,10 @@ module RbaseLtiModule
   class Engine < ::Rails::Engine
     isolate_namespace RbaseLtiModule
 
+    initializer "rbase_lti_module.assets" do |app|
+      app.config.assets.paths << root.join("app", "assets", "images")
+    end
+
     initializer "rbase_lti_module.iframe_lti_context" do
       # UserApplication 配下は LTI 起動後の遷移先なので lti_ctx を有効化
       config.to_prepare do

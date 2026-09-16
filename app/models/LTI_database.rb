@@ -123,6 +123,20 @@ class LTIDatabase < ApplicationRecord
     deployment
   end
 
+  # Canvas はコース追加などで deployment_id が増える。login 時に受け取った ID を蓄積する。
+  def self.remember_deployment!(iss, client_id, deployment_id)
+    return if iss.blank? || client_id.blank? || deployment_id.blank?
+
+    record = where(iss: iss, client_id: client_id).first
+    return unless record
+
+    ids = Array(record.deployment).map(&:to_s)
+    return if ids.include?(deployment_id.to_s)
+
+    ids << deployment_id.to_s
+    record.update!(deployment_json: JSON.generate(ids))
+  end
+
   #noinspection RubyArgCount
   def self.create_pem
     bits = 2048

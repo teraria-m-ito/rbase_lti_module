@@ -60,14 +60,16 @@ module Api
         end
 
         @client_id       = registration_response['client_id']
-        @deployment_id   = registration_response.dig('https://purl.imsglobal.org/spec/lti-tool-configuration', 'deployment_id') || registration_response['lti_deployment_id']
+        @deployment_id   = registration_response.dig('https://purl.imsglobal.org/spec/lti-tool-configuration', 'deployment_id') ||
+                           registration_response['lti_deployment_id'] ||
+                           registration_response['deployment_id']
 
         lti_database.client_id = @client_id
         lti_database.iss = issuer
         lti_database.auth_login_url = oidc["authorization_endpoint"]
         lti_database.auth_token_url = oidc["token_endpoint"]
         lti_database.key_set_url = oidc["jwks_uri"]
-        lti_database.deployment_json = @deployment_id
+        lti_database.deployment_json = @deployment_id.present? ? JSON.generate([@deployment_id]) : nil
         if lti_database.private_key_file.blank? or lti_database.private_key_file == "dummy"
           plain, public_key = ::LTIDatabase.create_pem
           lti_database.private_key_file = plain
@@ -182,8 +184,21 @@ module Api
             "domain"           => URI.parse(launch_url).host,
             "target_link_uri"  => launch_url,
             "messages" => [
-              { "type" => "LtiResourceLinkRequest" },
-              { "type" => "LtiDeepLinkingRequest" }
+              {
+                "type" => "LtiResourceLinkRequest",
+                "placements" => [
+                  "https://canvas.instructure.com/lti/assignment_selection",
+                  "https://canvas.instructure.com/lti/homework_submission",
+                  "https://canvas.instructure.com/lti/link_selection"
+                ]
+              },
+              {
+                "type" => "LtiDeepLinkingRequest",
+                "placements" => [
+                  "https://canvas.instructure.com/lti/assignment_selection",
+                  "https://canvas.instructure.com/lti/homework_submission"
+                ]
+              }
             ],
             "custom_parameters" => @custom_params,
             "claims"  => ["iss","sub","name","email"]

@@ -23,6 +23,7 @@ module Lti
         launch_url = "/launch"
       end
       begin
+        ::LTIDatabase.remember_deployment!(params["iss"], params["client_id"], params["lti_deployment_id"])
         auth_login_return_url = oidc.do_oidc_login_redirect(launch_url)
       rescue => e
         Rails.logger.error(e.full_message)

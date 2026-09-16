@@ -6,10 +6,21 @@ module Api
   module Lti
     class LtiToolRegisterController < ::Api::BasesController
       include ApiCommon
+      include ::SelectableAttr::Base
 
       layout false
 
       protect_from_forgery except: :new
+
+      selectable_attr :optional_placement do
+        entry "global_navigation", :global_navigation, "グローバルナビゲーション"
+        entry "user_navigation", :user_navigation, "ユーザーナビゲーション"
+        entry "account_navigation", :account_navigation, "アカウントナビゲーション"
+        entry "course_navigation", :course_navigation, "コースナビゲーション"
+        entry "course_home_sub_navigation", :course_home_sub_navigation, "コースホームサブナビゲーション"
+        entry "course_settings_sub_navigation", :course_settings_sub_navigation, "コース設定サブナビゲーション"
+        entry "top_navigation", :top_navigation, "トップナビゲーション"
+      end
 
       def new
         @base_url = request.base_url
@@ -171,6 +182,19 @@ module Api
         deep_link_url = "#{domain_url}/#{@tool_part_url}/configure"
         deep_link_return_url = "#{domain_url}/#{@tool_part_url}/configure"
 
+        requested_placements = Array(params[:placements]).flat_map { |v| v.to_s.split(",") }.map(&:strip)
+        resource_link_placements = [
+          "https://canvas.instructure.com/lti/assignment_selection",
+          "https://canvas.instructure.com/lti/homework_submission",
+          "https://canvas.instructure.com/lti/link_selection"
+        ]
+        self.class.optional_placement_ids.each do |id|
+          next unless requested_placements.include?(id)
+          resource_link_placements << "https://canvas.instructure.com/lti/#{id}"
+        end
+
+        icon_url = "#{domain_url}#{view_context.asset_path("menu_icon.svg")}"
+
         result = {
           "application_type" => "web",
           "response_types"   => ["id_token"],
@@ -180,17 +204,15 @@ module Api
           "initiate_login_uri" => initiate_login_uri,
           "redirect_uris"      => [launch_url], #[LAUNCH_URL, DEEP_LINK_RETURN_URL],
           "jwks_uri"           => "#{jwks_url}?name=#{@database_name}",
+          "logo_uri"           => icon_url,
           "https://purl.imsglobal.org/spec/lti-tool-configuration" => {
             "domain"           => URI.parse(launch_url).host,
             "target_link_uri"  => launch_url,
             "messages" => [
               {
                 "type" => "LtiResourceLinkRequest",
-                "placements" => [
-                  "https://canvas.instructure.com/lti/assignment_selection",
-                  "https://canvas.instructure.com/lti/homework_submission",
-                  "https://canvas.instructure.com/lti/link_selection"
-                ]
+                "placements" => resource_link_placements,
+                "icon_uri" => icon_url
               },
               {
                 "type" => "LtiDeepLinkingRequest",

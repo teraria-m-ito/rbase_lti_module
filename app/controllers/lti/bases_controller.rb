@@ -216,6 +216,7 @@ module Lti
           resource_id = @launch.get_resource["id"].to_i
           resource_name = @launch.get_resource["title"]
 
+          session[:canvas_admin_embedded_ui] = true
           redir = @launch_url.presence || lti_default_post_launch_path
           redirect_to ::LTI::LaunchContextToken.append_lti_context_to_url(
             redir, lms_user.id, @launch.get_launch_id

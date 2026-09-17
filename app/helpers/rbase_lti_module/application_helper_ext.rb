@@ -13,13 +13,14 @@ module RbaseLtiModule
           render "common/aside_custom"
         end
 
-        # Canvas 管理メニューの「閉じる」は iframe 内では不要（window.close が効かない・誤操作防止）
-        # Turbo 等の fetch では Sec-Fetch-Dest が iframe にならず、検索後に閉じるが再表示されるため
-        # 一度 embed と判定したらセッションに保持し、最上位の document ナビゲーションでのみ解除する。
+        # LTI 経由（iframe / lti_ctx / launch セッション）では「閉じる」を出さない。
+        # Turbo 等の fetch では Sec-Fetch-Dest が iframe にならないため、一度判定したらセッションに保持する。
+        # 最上位の document ナビゲーションかつ LTI 文脈が無いときだけ解除する。
         def hide_canvas_admin_top_menu_close_button?
           dest = request.get_header("HTTP_SEC_FETCH_DEST").to_s
           mode = request.get_header("HTTP_SEC_FETCH_MODE").to_s
-          if params[:lti_ctx].present? || dest == "iframe"
+          via_lti = params[:lti_ctx].present? || dest == "iframe" || session[:launch_data].present?
+          if via_lti
             session[:canvas_admin_embedded_ui] = true
           elsif dest == "document" && mode == "navigate"
             session.delete(:canvas_admin_embedded_ui)

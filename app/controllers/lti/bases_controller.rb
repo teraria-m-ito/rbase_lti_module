@@ -9,6 +9,7 @@ module Lti
     before_action :set_page_number
     before_action :set_referrer
     before_action :set_admin_user
+    after_action :allow_iframe
 
     layout "application_lti"
 
@@ -386,12 +387,12 @@ module Lti
         elsif current_lms_user.present? && current_lms_user.lms.present?
           [current_lms_user.lms]
         else
-          ["https://lti.example.com"]
+          []
         end
-      ancestors = hosts.join(" ")
-      # X-Frame-Options の ALLOW-FROM は単一URLのみ（非推奨）。複数時は CSP を優先
-      response.headers["X-Frame-Options"] = "ALLOW-FROM #{hosts.first}" if hosts.size == 1
-      response.headers.delete("X-Frame-Options") if hosts.size > 1
+      # 'self' がないと、同一オリジンの入れ子 iframe（eport 上から eport を表示）が拒否される
+      ancestors = ["'self'", request.base_url, *hosts].reject(&:blank?).uniq.join(" ")
+      # ALLOW-FROM は現行ブラウザで無視され、CSP と競合し得るため付けない
+      response.headers.delete("X-Frame-Options")
       response.headers["Content-Security-Policy"] = "frame-ancestors #{ancestors}"
     end
     

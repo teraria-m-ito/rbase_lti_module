@@ -216,11 +216,11 @@ ja:
           button_destroy: "削除"
       show:
         title: "LTIデータベース詳細"
-        button_back: "前のページへ"
+        button_back: "戻る"
       new:
         title: "新規LTIデータベース登録"
         button_create: "登録"
-        button_cancel: "前のページへ"
+        button_cancel: "戻る"
         header_guide: "LTIデータベース内容を入力して、登録ボタンをクリックして下さい。"
         button_update_pem: "生成"
         button_update_pubpem: "公開鍵"
@@ -228,7 +228,7 @@ ja:
       edit:
         title: "LTIデータベース編集"
         button_update: "更新"
-        button_cancel: "前のページへ"
+        button_cancel: "戻る"
         header_guide: "LTIデータベース内容を入力して、更新ボタンをクリックして下さい。"
         table_system_settings:
         button_update_pem: "生成"
@@ -267,7 +267,7 @@ ja:
         button_cancel: "戻る"
       show:
         title: "LMSユーザ参照"
-        button_back: "前のページへ"
+        button_back: "戻る"
 
     lms_user_imports:
       messages:

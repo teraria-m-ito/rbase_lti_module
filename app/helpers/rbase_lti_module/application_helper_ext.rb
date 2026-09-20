@@ -32,10 +32,10 @@ module RbaseLtiModule
           case form.object.custom_field.field_type
           when "institution"
             institutions = ::LTIOrg.where(org_div: ::LTIOrg.org_div_id_by_key(:institution)).order(:org_cd).all
-            options.update({as: :select, collection: institutions.map{|x|[x.org_name, x.id]}, input_html: {class: "select_institution"}})
+            options.update({as: :select, collection: institutions.map { |x| [x.org_name, x.org_cd] }, include_blank: "（未指定）", input_html: {class: "select_institution"}})
           when "department"
-            departments = ::LTIOrg.where(org_div: ::LTIOrg.org_div_id_by_key(:department)).order(:org_cd).all
-            options.update({as: :select, collection: departments.map{|x|[x.org_name, x.id, data: { parent_org_id: x.parent_org_id }]}, input_html: {class: "select_department"}})
+            departments = ::LTIOrg.where(org_div: ::LTIOrg.org_div_id_by_key(:department)).includes(:parent_org).order(:org_cd).all
+            options.update({as: :select, collection: departments.map { |x| [x.org_name, x.org_cd, data: { parent_org_id: x.parent_org&.org_cd }] }, include_blank: "（未指定）", input_html: {class: "select_department"}})
           end
         end
       end

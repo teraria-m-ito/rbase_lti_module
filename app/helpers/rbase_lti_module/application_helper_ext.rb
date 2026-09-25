@@ -29,13 +29,56 @@ module RbaseLtiModule
         end
 
         def custom_field_input_else_field_type_with_rbase_lti_module(form, options={})
-          case form.object.custom_field.field_type
+          apply_lti_org_custom_field_select_options!(
+            options,
+            form.object.custom_field.field_type,
+            form.object.field_value,
+            include_blank: "（未指定）"
+          )
+          custom_field_input_else_field_type_without_rbase_lti_module(form, options)
+        end
+
+        def search_condition_custom_field_input_else_field_type_with_rbase_lti_module(form, custom_field, options={})
+          value = options.dig(:input_html, :value)
+          apply_lti_org_custom_field_select_options!(
+            options,
+            custom_field.field_type,
+            value,
+            include_blank: true
+          )
+          search_condition_custom_field_input_else_field_type_without_rbase_lti_module(form, custom_field, options)
+        end
+
+        def apply_lti_org_custom_field_select_options!(options, field_type, field_value, include_blank:)
+          case field_type.to_s
           when "institution"
-            institutions = ::LTIOrg.where(org_div: ::LTIOrg.org_div_id_by_key(:institution)).order(:org_cd).all
-            options.update({as: :select, collection: institutions.map { |x| [x.org_name, x.org_cd] }, include_blank: "（未指定）", input_html: {class: "select_institution"}})
+            institutions = ::LTIOrg.where(org_div: ::LTIOrg.org_div_id_by_key(:institution)).order(:org_cd)
+            selected = institutions.detect { |x| x.org_cd.to_s == field_value.to_s }&.org_cd
+            selected ||= institutions.detect { |x| x.id.to_s == field_value.to_s }&.org_cd
+            input_html = (options[:input_html] || {})
+            input_html.delete(:value)
+            input_html[:class] = [input_html[:class], "select_institution"].compact.join(" ")
+            options.update(
+              as: :select,
+              collection: institutions.map { |x| [x.org_name, x.org_cd] },
+              include_blank: include_blank,
+              selected: selected,
+              input_html: input_html
+            )
           when "department"
-            departments = ::LTIOrg.where(org_div: ::LTIOrg.org_div_id_by_key(:department)).includes(:parent_org).order(:org_cd).all
-            options.update({as: :select, collection: departments.map { |x| [x.org_name, x.org_cd, data: { parent_org_id: x.parent_org&.org_cd }] }, include_blank: "（未指定）", input_html: {class: "select_department"}})
+            departments = ::LTIOrg.where(org_div: ::LTIOrg.org_div_id_by_key(:department)).includes(:parent_org).order(:org_cd)
+            selected = departments.detect { |x| x.org_cd.to_s == field_value.to_s }&.org_cd
+            selected ||= departments.detect { |x| x.id.to_s == field_value.to_s }&.org_cd
+            input_html = (options[:input_html] || {})
+            input_html.delete(:value)
+            input_html[:class] = [input_html[:class], "select_department"].compact.join(" ")
+            options.update(
+              as: :select,
+              collection: departments.map { |x| [x.org_name, x.org_cd, data: { parent_org_id: x.parent_org&.org_cd }] },
+              include_blank: include_blank,
+              selected: selected,
+              input_html: input_html
+            )
           end
         end
       end

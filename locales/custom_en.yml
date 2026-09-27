@@ -40,6 +40,7 @@ en:
       lms_users_create: "Create"
       lms_users_update: "Update"
       lms_users_destroy: "Delete"
+      lms_users_proxy_login: "Proxy login"
 
       lms_user_imports_create: "LMS user import (register)"
       lms_user_imports_download: "LMS user import (download)"
@@ -262,6 +263,16 @@ en:
       show:
         title: "LMS user"
         button_back: "Back"
+        button_proxy_login: "Proxy login"
+        confirm_proxy_login: "Log in as this user. Are you sure?"
+      proxy_login:
+        badge: "Proxy"
+        confirm_stop: "End proxy login. Are you sure?"
+        notice_started: "You are now logged in as the selected user."
+        notice_stopped: "Proxy login has ended."
+        alert_failed: "Proxy login failed."
+        alert_already: "You are already in a proxy login."
+        alert_self: "You cannot proxy login as yourself."
 
     lms_user_imports:
       messages:

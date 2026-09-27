@@ -107,6 +107,17 @@ tr.not_submitted:hover {
     margin-left: 0.1rem;
 }
 
+.js-stop-proxy-login-form {
+    display: inline;
+    margin: 0;
+}
+.js-stop-proxy-login {
+    margin-right: 0.35rem;
+    border: 0;
+    vertical-align: middle;
+    cursor: pointer;
+}
+
 .badge-multi {
     align-items: center;
     vertical-align: middle;

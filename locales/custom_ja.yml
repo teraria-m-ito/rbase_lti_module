@@ -41,6 +41,7 @@ ja:
       lms_users_create: "新規登録"
       lms_users_update: "更新"
       lms_users_destroy: "削除"
+      lms_users_proxy_login: "代理ログイン"
 
       lms_user_imports_create: "LMSユーザインポート登録"
       lms_user_imports_download: "LMSユーザインポートダウンロード"
@@ -268,6 +269,16 @@ ja:
       show:
         title: "LMSユーザ参照"
         button_back: "戻る"
+        button_proxy_login: "代理ログイン"
+        confirm_proxy_login: "代理ログインします。よろしいですか？"
+      proxy_login:
+        badge: "代理"
+        confirm_stop: "代理ログインを終了します。よろしいですか？"
+        notice_started: "代理ログインしました。"
+        notice_stopped: "代理ログインを終了しました。"
+        alert_failed: "代理ログインに失敗しました。"
+        alert_already: "すでに代理ログイン中です。"
+        alert_self: "自分自身には代理ログインできません。"
 
     lms_user_imports:
       messages:

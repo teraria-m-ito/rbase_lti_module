@@ -1,4 +1,5 @@
 import {application} from "@app_root/app/javascript/controllers/application"
+import "@app_root/rbase_gems/rbase_lti_module/app/javascript/proxy_login.js"
 
 import Admin__DatebasesController from "./admin/lti_databases_controller"
 application.register("admin--lti_databases", Admin__DatebasesController)

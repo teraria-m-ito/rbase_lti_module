@@ -6,6 +6,7 @@ class LmsUsersController < CustomUserApplicationController
   before_action :setup_values, only: [:index, :show, :new, :create, :edit, :update]
   before_action :set_lms_user_custom_fields, only: [:new, :edit, :show]
   before_action :set_inst_dept
+  skip_before_action :check_permission, only: [:stop_proxy_login]
 
   respond_to :html
   def index
@@ -133,6 +134,78 @@ class LmsUsersController < CustomUserApplicationController
   def destroy
     flash[:notice] = t("views.common.destroy_complete_message") if @lms_user.destroy
     redirect_to lms_users_path, status: :see_other
+  end
+
+  desc :display_name => "lms_users_proxy_login"
+  def proxy_login
+    @lms_user = ::LmsUser.find_by(id: params[:id])
+    unless @lms_user
+      flash[:alert] = t(:"views.lms_users.proxy_login.alert_failed")
+      return redirect_to lms_users_path
+    end
+    if session[:proxy_login_original_user_id].present?
+      flash[:alert] = t(:"views.lms_users.proxy_login.alert_already")
+      return redirect_to lms_user_path(@lms_user)
+    end
+    if current_lms_user.try(:id) == @lms_user.id
+      flash[:alert] = t(:"views.lms_users.proxy_login.alert_self")
+      return redirect_to lms_user_path(@lms_user)
+    end
+
+    original_admin_user_id = current_admin_user.id
+    original_lms_user_id = session[:current_lms_user].try(:id)
+    admin_user = @lms_user.admin_user
+    begin
+      admin_user = admin_user || @lms_user.create_admin_user
+    rescue StandardError => e
+      ::Rails.logger.error("proxy_login create_admin_user: #{e.class} #{e.message}")
+      admin_user = nil
+    end
+    unless admin_user.try(:persisted?)
+      flash[:alert] = t(:"views.lms_users.proxy_login.alert_failed")
+      return redirect_to lms_user_path(@lms_user)
+    end
+
+    sign_out(current_admin_user) if current_admin_user
+    sign_in(admin_user)
+    session[:proxy_login_original_user_id] = original_admin_user_id
+    session[:proxy_login_original_lms_user_id] = original_lms_user_id
+    session[:current_lms_user] = @lms_user
+    if current_admin_user && current_admin_user.sites.any?
+      current_admin_user.selected_site = current_admin_user.sites.first.id
+    end
+    flash[:notice] = t(:"views.lms_users.proxy_login.notice_started")
+    redirect_to root_path
+  end
+
+  def stop_proxy_login
+    original_admin_user_id = session[:proxy_login_original_user_id]
+    original_lms_user_id = session[:proxy_login_original_lms_user_id]
+    impersonated_lms_user_id = session[:current_lms_user].try(:id)
+    unless original_admin_user_id.present?
+      return redirect_to root_path
+    end
+
+    original_admin_user = ::AdminUser.find_by(id: original_admin_user_id)
+    unless original_admin_user
+      flash[:alert] = t(:"views.lms_users.proxy_login.alert_failed")
+      return redirect_to root_path
+    end
+
+    sign_out(current_admin_user) if current_admin_user
+    sign_in(original_admin_user)
+    session[:proxy_login_original_user_id] = nil
+    session[:proxy_login_original_lms_user_id] = nil
+    session[:current_lms_user] = original_lms_user_id.present? ? ::LmsUser.find_by(id: original_lms_user_id) : ::LmsUser.where(admin_user_id: original_admin_user.id).first
+    if current_admin_user && current_admin_user.sites.any?
+      current_admin_user.selected_site = current_admin_user.sites.first.id
+    end
+    flash[:notice] = t(:"views.lms_users.proxy_login.notice_stopped")
+    if impersonated_lms_user_id.present? && ::LmsUser.exists?(impersonated_lms_user_id)
+      redirect_to lms_user_path(impersonated_lms_user_id)
+    else
+      redirect_to lms_users_path
+    end
   end
   private
 

@@ -9,6 +9,35 @@ module RbaseLtiModule
           session[:current_lms_user]
         end
 
+        def proxy_login?
+          session[:proxy_login_original_user_id].present?
+        end
+
+        def top_menu_username_text
+          if proxy_login?
+            current_lms_user.try(:name).presence || current_admin_user.try(:name).to_s
+          else
+            current_admin_user.try(:name).to_s
+          end
+        end
+
+        def current_lms_username_for_top_menu
+          name = top_menu_username_text
+          return name unless proxy_login?
+
+          badge = button_to t(:"views.lms_users.proxy_login.badge"),
+                            stop_proxy_login_lms_users_path,
+                            method: :post,
+                            class: "badge badge-danger js-stop-proxy-login",
+                            form: { class: "d-inline js-stop-proxy-login-form", data: { turbo: false } },
+                            data: { confirm_message: t(:"views.lms_users.proxy_login.confirm_stop") }
+          "#{badge} #{ERB::Util.html_escape(name)}".html_safe
+        end
+
+        def render_top_with_rbase_lti_module
+          render "common/top_lti"
+        end
+
         def render_aside_with_rbase_lti_module
           render "common/aside_custom"
         end

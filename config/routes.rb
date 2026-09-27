@@ -14,7 +14,14 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :lms_users
+  resources :lms_users do
+    member do
+      post :proxy_login
+    end
+    collection do
+      post :stop_proxy_login
+    end
+  end
 
   resource :lms_user_imports do
     collection do

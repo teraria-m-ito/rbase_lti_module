@@ -13,11 +13,11 @@ module RbaseLtiModule
           session[:proxy_login_original_user_id].present?
         end
 
-        def top_menu_username_text_with_rbase_lti_module
+        def top_menu_username_text
           if proxy_login?
-            current_lms_user.try(:name).presence || top_menu_username_text_without_rbase_lti_module
+            current_lms_user.try(:name).presence || current_admin_user.try(:name).to_s
           else
-            top_menu_username_text_without_rbase_lti_module
+            current_admin_user.try(:name).to_s
           end
         end
 

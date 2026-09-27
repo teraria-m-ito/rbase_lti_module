@@ -9,7 +9,6 @@ module Lti
     before_action :set_page_number
     before_action :set_referrer
     before_action :set_admin_user
-    after_action :allow_iframe
 
     layout "application_lti"
 
@@ -380,23 +379,6 @@ module Lti
     end
 
     private
-    def allow_iframe
-      # LMS_HOST はカンマ区切りで複数指定可（CSP frame-ancestors は空白区切り）
-      hosts =
-        if ENV["LMS_HOST"].present?
-          ENV["LMS_HOST"].split(",").map(&:strip).reject(&:blank?)
-        elsif current_lms_user.present? && current_lms_user.lms.present?
-          [current_lms_user.lms]
-        else
-          []
-        end
-      # 'self' がないと、同一オリジンの入れ子 iframe（eport 上から eport を表示）が拒否される
-      ancestors = ["'self'", request.base_url, *hosts].reject(&:blank?).uniq.join(" ")
-      # ALLOW-FROM は現行ブラウザで無視され、CSP と競合し得るため付けない
-      response.headers.delete("X-Frame-Options")
-      response.headers["Content-Security-Policy"] = "frame-ancestors #{ancestors}"
-    end
-    
     def lti_default_post_launch_path
       root_path
     end

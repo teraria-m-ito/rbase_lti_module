@@ -4,8 +4,6 @@ module Lti
     respond_to :html
 
     before_action :set_lti_import_history, only: [:show]
-    
-    after_action :allow_iframe
 
     def index
       @model_name = "LTI_import_histories/sort_conditions"

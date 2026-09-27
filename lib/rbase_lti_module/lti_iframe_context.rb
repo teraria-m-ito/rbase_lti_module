@@ -7,6 +7,7 @@ module RbaseLtiModule
 
     included do
       before_action :restore_lti_context_from_lti_ctx_param, prepend: true, if: :lti_ctx_in_request?
+      after_action :allow_iframe
     end
 
     def lti_ctx_in_request?
@@ -75,6 +76,43 @@ module RbaseLtiModule
       end
     rescue ::StandardError => e
       ::Rails.logger.warn("LtiIframeContext#rebuild_session_launch_data_from_cache: #{e.class} #{e.message}")
+    end
+
+    # LMS（Canvas / Moodle 等）の iframe 埋め込みを許可する。
+    # LMS_HOST・ログイン中の lms・LTIDatabase.iss をすべて列挙する（排他にしない）。
+    def allow_iframe
+      hosts = []
+      if ENV["LMS_HOST"].present?
+        hosts.concat(ENV["LMS_HOST"].split(",").map(&:strip))
+      end
+      lms_user = respond_to?(:current_lms_user, true) ? current_lms_user : session[:current_lms_user]
+      if lms_user.respond_to?(:lms) && lms_user.lms.present?
+        hosts << lms_user.lms
+      end
+      if defined?(::LTIDatabase)
+        begin
+          hosts.concat(::LTIDatabase.where.not(iss: [nil, ""]).distinct.pluck(:iss))
+        rescue ::StandardError => e
+          ::Rails.logger.warn("LtiIframeContext#allow_iframe LTIDatabase: #{e.class} #{e.message}")
+        end
+      end
+      origins = hosts.map { |h| frame_ancestor_origin(h) }.reject(&:blank?).uniq
+      # 'self' がないと、同一オリジンの入れ子 iframe が拒否される
+      ancestors = ["'self'", request.base_url, *origins].reject(&:blank?).uniq.join(" ")
+      # ALLOW-FROM は現行ブラウザで無視され、CSP と競合し得るため付けない
+      response.headers.delete("X-Frame-Options")
+      response.headers["Content-Security-Policy"] = "frame-ancestors #{ancestors}"
+    end
+
+    def frame_ancestor_origin(url)
+      uri = URI.parse(url.to_s.strip)
+      return url.to_s.strip if uri.scheme.blank? || uri.host.blank?
+
+      origin = "#{uri.scheme}://#{uri.host}"
+      origin += ":#{uri.port}" if uri.port && uri.port != uri.default_port
+      origin
+    rescue URI::InvalidURIError
+      url.to_s.strip
     end
   end
 end

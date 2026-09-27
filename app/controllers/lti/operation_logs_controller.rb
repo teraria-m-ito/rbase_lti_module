@@ -3,7 +3,6 @@ module Lti
     include ::Rbase::PluginModule::Extendable # 継承を許可する宣言（必須）
     respond_to :html
     
-    after_action :allow_iframe
     before_action :set_inst_dept
 
     def index

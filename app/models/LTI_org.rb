@@ -1,4 +1,5 @@
 class LTIOrg < ApplicationRecord
+  include ::Rbase::PluginModule::Extendable # 継承を許可する宣言（必須）
   self.table_name = "lti_orgs"
 
   before_create :created_userstamp
@@ -10,9 +11,6 @@ class LTIOrg < ApplicationRecord
   include ::SelectableAttr::Base
     
   belongs_to :parent_org, class_name: 'LTIOrg', foreign_key: 'parent_org_id', optional: true
-    
-  has_many :lti_input_category_lti_orgs, class_name: '::LTIInputCategoryLtiOrg', foreign_key: 'lti_org_id', dependent: :destroy
-  has_many :lti_input_categories, class_name: '::LTIInputCategory', through: :lti_input_category_lti_orgs
 
   scope :display_order, -> { order(:org_cd) }
 

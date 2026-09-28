@@ -28,6 +28,8 @@ ja:
     lti/import_histories: "LTI/管理/インポート履歴"
 
     lti/settings: "LTI/管理/設定"
+    sso: "SSO/ログイン"
+    saml_idp: "SSO/SAML IdP"
 
     action:
       admin/lti_databases_index: "検索"
@@ -72,6 +74,13 @@ ja:
       lti/import_histories_show: "詳細"
 
       lti/settings_create: "登録"
+
+      "admin/lti_databases/button_update_pem": "PEM生成"
+      import_base_histories_index: "検索"
+      import_base_histories_show: "詳細"
+      sso_index: "表示"
+      saml_idp_create: "登録"
+      saml_idp_destroy: "削除"
 
   menu:
     top:

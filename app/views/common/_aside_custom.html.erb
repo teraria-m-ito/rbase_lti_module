@@ -1,8 +1,10 @@
 <!-- Main Sidebar Container -->
 <aside class="main-sidebar sidebar-dark-primary elevation-4">
   <%= link_to "/top", {class: "brand-link"} do %>
-    <%= image_tag 'logo.png', class: "brand-image" %>
-    <span class="brand-text font-weight-light"><%= SystemSetting[:app_name, current_admin_user.nil? ? Site.first.id : current_admin_user.try(:selected_site).to_i] || "TITLE" %> </span>
+    <% if layout_logo_path.present? %>
+      <%= image_tag layout_logo_path, class: "brand-image" %>
+    <% end %>
+    <span class="brand-text font-weight-light"><%= layout_app_name %> </span>
   <% end %>
 
   <!-- Sidebar -->

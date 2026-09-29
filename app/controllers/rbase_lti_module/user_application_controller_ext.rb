@@ -5,14 +5,23 @@ module RbaseLtiModule
     end
 
     def index_with_rbase_lti_modulle
+      if request_site_id.blank?
+        redirect_to new_admin_user_session_path
+        return
+      end
+
       case @sso_type
       when "saml2" then
-        request = OneLogin::RubySaml::Authrequest.new
-        redirect_to(request.create(saml_settings), allow_other_host: true)
+        redirect_to_saml_idp
       end
     end
 
     def consume_with_rbase_lti_module
+      if @sso_type.blank?
+        redirect_to new_admin_user_session_path
+        return
+      end
+
       case @sso_type
       when "saml2" then
         response = OneLogin::RubySaml::Response.new(params[:SAMLResponse], {skip_conditions: true})
@@ -20,7 +29,8 @@ module RbaseLtiModule
         iss = nil
         if response.is_valid?
           ActiveRecord::Base.transaction do
-            iss_list = SystemSetting.get_multivalue_list(:issue_mapping, Site.first.id)
+            site_id = request_site_id
+            iss_list = site_id.present? ? SystemSetting.get_multivalue_list(:issue_mapping, site_id) : []
             iss_list.each do |iss_value|
               if iss_value[:value_div] == response.issuers.to_a.first
                 iss = iss_value[:value]
@@ -65,8 +75,7 @@ module RbaseLtiModule
 
               lms_user.role = "STUDENT"
 
-              site = Site.first
-              lms_user.site_ids = [site.id]
+              lms_user.site_ids = [site_id] if site_id
               lms_user.save!
             end
 
@@ -129,8 +138,7 @@ module RbaseLtiModule
             # LTIログインセッションを設定
             session[:current_lms_user] = ::LmsUser.where(admin_user_id: current_admin_user.id).first
             session[:launch_url] = session[:direct_url].to_s.split("?")[0]
-            # set_login
-            current_admin_user.selected_site = current_admin_user.sites.first.id
+            current_admin_user.selected_site = site_id if site_id
 
             sign_in(admin_user) unless current_admin_user
             flash[:notice] = t("devise.sessions.signed_in")

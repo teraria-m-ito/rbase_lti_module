@@ -213,7 +213,13 @@ class LTIOrgImport < ApplicationRecord
   end
 
   def self.import_lti_orgs(file_name, site_id)
-    site_id = ::Site.first.id if site_id.nil?
+    id = site_id.to_i
+    unless site_id.present? && id > 0 && ::Site.active.exists?(id)
+      msg = "[オフライン組織インポート] site_id が未指定または無効です file_name:#{file_name} site_id:#{site_id.inspect}"
+      logging_task_log(msg)
+      raise ArgumentError, msg
+    end
+    site_id = id
     logging_task_log("[オフライン組織インポート]開始 file_name:#{file_name} site_id:#{site_id}")
 
     admin_role = Role.where(role_short_name: "admin").first

@@ -51,11 +51,6 @@
         <%= link_to t(:"menu.top.sign_in"), new_admin_user_session_path, class: "nav-link" %>
       </li>
     <% end %>
-    <% if ::SystemSetting.get_setting(:display_google_translate, current_site_id || Site.order(:id).first.id).to_s == "1" %>
-      <li class="nav-item d-none d-sm-inline-block">
-        <div id="google_translate_element"></div>
-      </li>
-    <% end %>
   </ul>
 </nav>
 <!-- /.navbar -->

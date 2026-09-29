@@ -10,10 +10,12 @@ module LTI
       end
 
       # リダイレクト先 URL に lti_ctx= を付与する
-      def append_lti_context_to_url(url, lms_user_id, launch_id)
+      def append_lti_context_to_url(url, lms_user_id, launch_id, site_id = nil)
         return url if lms_user_id.blank? || launch_id.blank?
+        payload = { "lms_user_id" => lms_user_id, "launch_id" => launch_id }
+        payload["site_id"] = site_id if site_id.present?
         token = message_verifier.generate(
-          { "lms_user_id" => lms_user_id, "launch_id" => launch_id },
+          payload,
           expires_in: 1.week
         )
         s = url.to_s
@@ -21,7 +23,7 @@ module LTI
         "#{s}#{separator}lti_ctx=#{::CGI.escape(token)}"
       end
 
-      # 検証成功時は { "lms_user_id" =>, "launch_id" => } の Hash、失敗時 nil
+      # 検証成功時は { "lms_user_id" =>, "launch_id" =>, "site_id" => } の Hash、失敗時 nil
       def verify_lti_ctx_param(value)
         return nil if value.blank?
         h = message_verifier.verify(value)

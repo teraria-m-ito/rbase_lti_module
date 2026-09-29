@@ -50,8 +50,19 @@ module RbaseLtiModule
       end
       sign_in(admin_user) unless current_admin_user
       session[:current_lms_user] = lms_user
-      if current_admin_user && current_admin_user.sites.any?
-        current_admin_user.selected_site = current_admin_user.sites.first.id
+      if current_admin_user
+        allowed = Array(lms_user.site_ids).map(&:to_i).uniq.select { |id| accepted_site_id(id) }
+        if data["site_id"].present?
+          site_id = accepted_site_id(data["site_id"])
+          site_id = nil unless site_id && allowed.include?(site_id)
+        else
+          site_id = nil
+          if respond_to?(:resolve_lti_active_site_id, true)
+            site_id = resolve_lti_active_site_id(lms_user.site_ids)
+          end
+          site_id = allowed.first if site_id.blank? && allowed.size == 1
+        end
+        current_admin_user.selected_site = site_id if site_id
       end
       rebuild_session_launch_data_from_cache(data["launch_id"])
     end

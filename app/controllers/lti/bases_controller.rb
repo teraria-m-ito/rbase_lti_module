@@ -110,6 +110,10 @@ module Lti
             raise ::LTI::Exception.new("LTI Database is not found!")
           end
           site_ids = lti_database.site_ids
+          site_id = resolve_lti_active_site_id(site_ids)
+          if site_id.blank?
+            return _render_403
+          end
 
           lms_user.site_ids = site_ids
           unless lms_user.valid?
@@ -174,8 +178,7 @@ module Lti
 
           # LTIログインセッションを設定
           session[:current_lms_user] = ::LmsUser.where(admin_user_id: current_admin_user.id).first
-          # set_login
-          current_admin_user.selected_site = current_admin_user.sites.first.id
+          current_admin_user.selected_site = site_id
 
           @launch.set_token("auth", session[:current_lms_user].id)
 
@@ -218,7 +221,7 @@ module Lti
           session[:canvas_admin_embedded_ui] = true
           redir = @launch_url.presence || lti_default_post_launch_path
           redirect_to ::LTI::LaunchContextToken.append_lti_context_to_url(
-            redir, lms_user.id, @launch.get_launch_id
+            redir, lms_user.id, @launch.get_launch_id, site_id
           )
         end
       rescue => e
@@ -383,6 +386,47 @@ module Lti
       root_path
     end
 
+    # LTIDatabase / LmsUser に紐づく有効サイトからカレントサイトを決める。Site.first は使わない。
+    def resolve_lti_active_site_id(candidate_site_ids)
+      allowed = Array(candidate_site_ids).map(&:to_i).uniq.select { |id| accepted_site_id(id) }
+
+      from_session = accepted_site_id(session[:active_site_id])
+      if from_session && !allowed.include?(from_session)
+        session[:active_site_id] = nil
+        from_session = nil
+      end
+      return from_session if from_session
+
+      raw_param = params[:site_id].presence
+      raw_param = params[:site].presence if raw_param.blank? && !params[:site].is_a?(ActionController::Parameters) && !params[:site].is_a?(Hash)
+      if raw_param.present?
+        from_param = accepted_site_id(raw_param)
+        return from_param if from_param && allowed.include?(from_param)
+        return nil
+      end
+
+      custom = session[:lti_custom_params]
+      if custom.blank? && @launch.present?
+        custom = @launch.get_launch_data["https://purl.imsglobal.org/spec/lti/claim/custom"]
+      end
+      if custom.present?
+        raw_custom = custom["site_id"].presence || custom[:site_id].presence
+        if raw_custom.blank?
+          raw_custom = custom["site"].presence || custom[:site].presence
+          raw_custom = nil if raw_custom.is_a?(Hash) || raw_custom.is_a?(ActionController::Parameters)
+        end
+        if raw_custom.present?
+          from_custom = accepted_site_id(raw_custom)
+          return from_custom if from_custom && allowed.include?(from_custom)
+          return nil
+        end
+      end
+
+      return allowed.first if allowed.size == 1
+
+      nil
+    end
+
     def set_login
       if params[:state]
         cookie = ::LTI::CookieStore.new
@@ -401,7 +445,8 @@ module Lti
         session[:current_lms_user] = lms_user
         current_admin_user = lms_user.create_admin_user
         sign_in(current_admin_user)
-        current_admin_user.selected_site = current_admin_user.sites.first.id
+        site_id = resolve_lti_active_site_id(lms_user.site_ids)
+        current_admin_user.selected_site = site_id if site_id
       else
         if current_admin_user and current_lms_user.blank?
           lms_user = ::LmsUser.where(admin_user_id: current_admin_user.id).first
@@ -502,20 +547,19 @@ module Lti
           end
         else
           # current_lms_user パラメータなしの未ログイン — 環境に依らず SSO またはサインインへ誘導
-          site = Site.first
+          site_id = request_site_id
           unexpected_url = [new_admin_user_session_path]
-          unless SystemSetting.get_setting(:force_sign_in, site.id) == "1"
+          if site_id.present? && SystemSetting.get_setting(:force_sign_in, site_id) != "1"
             unexpected_url << root_path
           end
           unless unexpected_url.include?(Thread.current[:request].path)
-            if SystemSetting.get_setting(:sso_enable, site.id) == "1" and SystemSetting.get_setting(:force_sso_login, site.id) == "1"
+            if site_id.present? && SystemSetting.get_setting(:sso_enable, site_id) == "1" && SystemSetting.get_setting(:force_sso_login, site_id) == "1"
               # 未ログインで、SSO認証がONの場合かつ、強制SSOログインを許可している場合は、SSO認証を行う
-              sso_type = ::SystemSetting.get_setting(:sso_type, site.id)
+              sso_type = ::SystemSetting.get_setting(:sso_type, site_id)
               case sso_type
               when "saml2" then
                 session[:direct_url] = Thread.current[:request].fullpath
-                request = OneLogin::RubySaml::Authrequest.new
-                redirect_to(request.create(saml_settings), allow_other_host: true)
+                redirect_to_saml_idp
               end
             else
               session[:direct_url] = Thread.current[:request].url
@@ -556,14 +600,6 @@ module Lti
     end
 
     private
-    def saml_settings
-      site = Site.first
-      sso_type = ::SystemSetting.get_setting(:sso_type, site.id)
-
-      logic = eval("::Logic::Sso#{sso_type.classify}Logic.new")
-      logic.settings
-    end
-
     def set_not_need_navlink
       @not_need_navlink = true
     end

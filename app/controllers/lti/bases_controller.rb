@@ -145,6 +145,18 @@ module Lti
               end
             end
             lms_user.save!
+          elsif ::Logic::CanvasLogic.get_lms_type(lms_user.lms, site_id) == "CANVAS" &&
+                ::LmsUser.lti_roles_only_user?(@launch.get_launch_data['https://purl.imsglobal.org/spec/lti/claim/roles'])
+            # Canvas API による履修補正は LTI roles が #User のみのときだけ
+            logic = ::Logic::CanvasLogic.new
+            user_info = logic.get_user_info(lms_user, site_id)
+            if user_info.present?
+              lms_user.lms_user_id = user_info["id"] if lms_user.lms_user_id.blank? && user_info["id"].present?
+              unless session[:lti_custom_params] && session[:lti_custom_params]["forced_role"]
+                logic.apply_member_role_from_enrollments!(lms_user, site_id)
+              end
+              lms_user.save! if lms_user.changed?
+            end
           end
 
           unless lms_user.lms_user_id

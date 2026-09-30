@@ -93,6 +93,13 @@ class LmsUser < ApplicationRecord
     result
   end
 
+  # LTI roles が system/person#User のみのとき true（http / https は同一視）
+  def self.lti_roles_only_user?(roles)
+    uris = Array(roles).map { |r| normalize_lti_role_uri(r) }.reject(&:blank?).uniq
+    user_uri = normalize_lti_role_uri("http://purl.imsglobal.org/vocab/lis/v2/system/person#User")
+    uris.size == 1 && uris.first == user_uri
+  end
+
   def admin_role_id_for_lti(default_role_div)
     candidates = []
     entry = self.role_entry

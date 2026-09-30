@@ -16,6 +16,7 @@ module Logic
     # 設定で定義
     # lmsのURLからLMSタイプに変換する
     # MOODLE or CANVAS
+    # lms_types が一致しなくても、CANVAS LMS 設定（canvas_api_base_url）と iss が同じなら CANVAS
     def self.get_lms_type(target, site_id = nil)
       sid = if site_id.present?
               id = site_id.to_i
@@ -31,18 +32,29 @@ module Logic
             end
       return nil if sid.blank?
 
-      lms_types = ::SystemSetting.get_setting(:lms_types, sid).to_s.split("\n")
-      result = nil
-      lms_types.each do |lms_type|
+      ::SystemSetting.get_setting(:lms_types, sid).to_s.split("\n").each do |lms_type|
         lms = lms_type.split("|")[0]
-        type = lms_type.split("|")[1]
-
-        if target == lms
-          result = type
-          break
-        end
+        type = lms_type.split("|")[1].to_s.strip
+        next if type.blank?
+        return type if lms_url_match?(target, lms)
       end
-      result
+
+      token = ::SystemSetting.get_setting(:canvas_api_token, sid).to_s
+      base = ::SystemSetting.get_setting(:canvas_api_base_url, sid).to_s
+      return "CANVAS" if token.present? && base.present? && lms_url_match?(target, base)
+
+      nil
+    end
+
+    def self.lms_url_match?(a, b)
+      na = a.to_s.strip.gsub("\uFF1A", ":").downcase.sub(/\/+\z/, "")
+      nb = b.to_s.strip.gsub("\uFF1A", ":").downcase.sub(/\/+\z/, "")
+      return false if na.blank? || nb.blank?
+      return true if na == nb
+
+      uri_a = URI.parse(na.match?(/\Ahttps?:/i) ? na : "https://#{na}") rescue nil
+      uri_b = URI.parse(nb.match?(/\Ahttps?:/i) ? nb : "https://#{nb}") rescue nil
+      uri_a && uri_b && uri_a.host.present? && uri_a.host == uri_b.host
     end
 
     ##

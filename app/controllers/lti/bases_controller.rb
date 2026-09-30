@@ -149,8 +149,14 @@ module Lti
             lms_user.save!
           else
             canvas_lms_type = ::Logic::CanvasLogic.get_lms_type(lms_user.lms, site_id)
+            if canvas_lms_type.blank?
+              token = ::SystemSetting.get_setting(:canvas_api_token, site_id).to_s
+              base = ::SystemSetting.get_setting(:canvas_api_base_url, site_id).to_s
+              family = @launch.get_launch_data.dig("https://purl.imsglobal.org/spec/lti/claim/tool_platform", "product_family_code").to_s.downcase
+              canvas_lms_type = "CANVAS" if token.present? && base.present? && family == "canvas"
+            end
             only_user = ::LmsUser.lti_roles_only_user?(@launch.get_launch_data['https://purl.imsglobal.org/spec/lti/claim/roles'])
-            Rails.logger.info("[CanvasLogic] lms_type=#{canvas_lms_type.inspect} only_user=#{only_user} role=#{lms_user.role}")
+            Rails.logger.info("[CanvasLogic] lms_type=#{canvas_lms_type.inspect} site_id=#{site_id} only_user=#{only_user} role=#{lms_user.role}")
             # USER は AdminUser ロールが MEMBER。LTI が #User のみのとき履修から STUDENT / TEACHER に補正する
             if canvas_lms_type == "CANVAS" && only_user && lms_user.role == "USER"
               logic = ::Logic::CanvasLogic.new

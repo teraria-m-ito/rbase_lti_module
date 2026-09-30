@@ -91,17 +91,13 @@ module Lti
           lms_user.lms = @launch.get_launch_data['iss']
 
           Rails.logger.info("launch name:#{lms_user.name}, given_name:#{lms_user.given_name}, family_name:#{lms_user.family_name}, email:#{lms_user.email}, lms:#{lms_user.lms}")
-          lti_role = ::LmsUser.select_lti_role(@launch.get_launch_data['https://purl.imsglobal.org/spec/lti/claim/roles'])
-
-          # 外部ツールのカスタムパラメータが設定されている場合は、同設定を優先してロール設定を行う
-          if session[:lti_custom_params] and session[:lti_custom_params]["forced_role"]
-            role = session[:lti_custom_params]["forced_role"]
-            lti_role = ::LmsUser.role_entries.select{|x| x[:id].to_s == role}.first
-            lms_user.role = lti_role[:id] unless lti_role.nil?
-          else
-            unless lms_user.role
-              lms_user.role = lti_role[:id] unless lti_role.nil?
-            end
+          # 既存ユーザは forced_role があるときだけ上書き。無ければ LTI roles では書き換えない
+          if session[:lti_custom_params] && session[:lti_custom_params]["forced_role"]
+            forced = ::LmsUser.role_entries.find { |x| x[:id].to_s == session[:lti_custom_params]["forced_role"].to_s }
+            lms_user.role = forced[:id] if forced
+          elsif lms_user.new_record? || lms_user.role.blank?
+            lti_role = ::LmsUser.select_lti_role(@launch.get_launch_data['https://purl.imsglobal.org/spec/lti/claim/roles'])
+            lms_user.role = lti_role[:id] if lti_role
           end
 
           lti_database = ::LTIDatabase.where(iss: @launch.get_launch_data['iss'], client_id: @launch.get_launch_data['aud']).first

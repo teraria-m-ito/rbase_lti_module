@@ -108,6 +108,7 @@ module Lti
           site_ids = lti_database.site_ids
           site_id = resolve_lti_active_site_id(site_ids)
           if site_id.blank?
+            Rails.logger.error("LTI site_id unresolved iss=#{@launch.get_launch_data['iss']} site_ids=#{site_ids.inspect}")
             return _render_403
           end
 
@@ -228,7 +229,11 @@ module Lti
           resource_name = @launch.get_resource["title"]
 
           session[:canvas_admin_embedded_ui] = true
-          redir = @launch_url.presence || lti_default_post_launch_path
+          redir = post_launch_redirect_path(lms_user, site_id)
+          if redir.blank?
+            Rails.logger.error("LTI post_launch_redirect 未設定 role=#{lms_user.role.inspect} site_id=#{site_id.inspect}")
+            return _render_403
+          end
           redirect_to ::LTI::LaunchContextToken.append_lti_context_to_url(
             redir, lms_user.id, @launch.get_launch_id, site_id
           )
@@ -393,6 +398,10 @@ module Lti
     private
     def lti_default_post_launch_path
       root_path
+    end
+
+    def post_launch_redirect_path(lms_user, site_id)
+      @launch_url.presence || lti_default_post_launch_path
     end
 
     # LTIDatabase / LmsUser に紐づく有効サイトからカレントサイトを決める。Site.first は使わない。

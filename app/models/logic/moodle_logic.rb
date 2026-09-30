@@ -9,12 +9,62 @@ module Logic
 
     attr_accessor :wstoken
 
+    # 有効な site_id を返す。明示 ID が無効なら nil（有効1件へ省略しない）。未指定はセッション → 有効1件。
+    def self.resolve_active_site_id(site_id = nil)
+      if site_id.present?
+        id = site_id.to_i
+        return id if id > 0 && ::Site.active.exists?(id)
+        return nil
+      end
+
+      sess = Thread.current[:request].try(:session).try(:[], :active_site_id)
+      if sess.present?
+        id = sess.to_i
+        return id if id > 0 && ::Site.active.exists?(id)
+      end
+
+      return ::Site.active.limit(1).pick(:id) if ::Site.active.count == 1
+
+      nil
+    end
+
+    # 許可サイト集合の中だけで決める。Site.first / sites.first は使わない。
+    def self.resolve_lms_user_site_id(lms_user, site_id = nil)
+      allowed = Array(lms_user&.site_ids).map(&:to_i).uniq.select { |id| id > 0 && ::Site.active.exists?(id) }
+
+      if site_id.present?
+        id = site_id.to_i
+        return allowed.include?(id) ? id : nil
+      end
+
+      sess = Thread.current[:request].try(:session).try(:[], :active_site_id)
+      if sess.present?
+        id = sess.to_i
+        return id if allowed.include?(id)
+      end
+
+      return allowed.first if allowed.size == 1
+
+      nil
+    end
+
+    def apply_moodle_api_settings!(lms_user)
+      site_id = self.class.resolve_lms_user_site_id(lms_user)
+      return if site_id.blank?
+
+      self.wstoken = ::SystemSetting.get_setting(:moodle_api_wstoken, site_id) unless self.wstoken
+      site_id
+    end
+
     ##
     # 設定で定義
     # lmsのURLからLMSタイプに変換する
     # MOODLE or CANVAS
     def self.get_lms_type(target)
-      lms_types = ::SystemSetting.get_setting(:lms_types, 1).to_s.split("\n")
+      sid = resolve_active_site_id
+      return nil if sid.blank?
+
+      lms_types = ::SystemSetting.get_setting(:lms_types, sid).to_s.split("\n")
       result = nil
       lms_types.each do |lms_type|
         lms = lms_type.split("|")[0]
@@ -33,7 +83,10 @@ module Logic
     # 設定で定義
     # APIで取得されるカスタムフィールド名をlms_usersのカラム名に変換する
     def self.get_lms_field_type(target)
-      lms_field_names = ::SystemSetting.get_setting(:lms_field_names, 1).to_s.split("\n")
+      sid = resolve_active_site_id
+      return nil if sid.blank?
+
+      lms_field_names = ::SystemSetting.get_setting(:lms_field_names, sid).to_s.split("\n")
       result = nil
       lms_field_names.each do |lms_field_name|
         lms_name = lms_field_name.split("|")[0]
@@ -51,8 +104,7 @@ module Logic
     ##
     # moodle apiを通して、ユーザ情報を取得する
     def get_user_info(lms_user)
-      site_id = lms_user.sites.first.id
-      self.wstoken = ::SystemSetting.get_setting(:moodle_api_wstoken, site_id) unless self.wstoken
+      return nil unless apply_moodle_api_settings!(lms_user)
       function = "core_user_get_users_by_field"
       url = "#{lms_user.lms}/webservice/rest/server.php?wstoken=#{self.wstoken}&wsfunction=#{function}&moodlewsrestformat=json&field=username&values[0]=#{lms_user.username.to_s.downcase}"
 
@@ -105,8 +157,7 @@ module Logic
     ##
     # ユーザが履修しているコースを取得する
     def get_users_courses(lms_user)
-      site_id = lms_user.sites.first.id
-      self.wstoken = ::SystemSetting.get_setting(:moodle_api_wstoken, site_id) unless self.wstoken
+      return nil unless apply_moodle_api_settings!(lms_user)
 
       function = "core_enrol_get_users_courses"
       url = "#{lms_user.lms}/webservice/rest/server.php?wstoken=#{self.wstoken}&wsfunction=#{function}&moodlewsrestformat=json&userid=#{lms_user.lms_user_id}"
@@ -128,8 +179,7 @@ module Logic
     ##
     # コース内の課題モジュール一覧を取得する
     def get_assign_contents(lms_user, course_id)
-      site_id = lms_user.sites.first.id
-      self.wstoken = ::SystemSetting.get_setting(:moodle_api_wstoken, site_id) unless self.wstoken
+      return nil unless apply_moodle_api_settings!(lms_user)
       function = "core_course_get_contents"
       url = "#{lms_user.lms}/webservice/rest/server.php?wstoken=#{self.wstoken}&wsfunction=#{function}&moodlewsrestformat=json&courseid=#{course_id}"
 
@@ -160,8 +210,7 @@ module Logic
     ##
     # 課題モジュールの提出物一覧を取得する
     def get_submissions(lms_user, assignment_id)
-      site_id = lms_user.sites.first.id
-      self.wstoken = ::SystemSetting.get_setting(:moodle_api_wstoken, site_id) unless self.wstoken
+      return nil unless apply_moodle_api_settings!(lms_user)
       function = "mod_assign_get_submissions"
       url = "#{lms_user.lms}/webservice/rest/server.php?wstoken=#{self.wstoken}&wsfunction=#{function}&moodlewsrestformat=json&assignmentids[0]=#{assignment_id}"
 

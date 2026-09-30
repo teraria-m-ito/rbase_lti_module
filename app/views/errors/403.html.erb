@@ -3,6 +3,9 @@
 <p>
   アクセス権限がない為、ページアクセスを中断しました。<br/>
   前回ログインから時間が経過している場合、<br/>
-  <a href="<%= ::SystemSetting.get_setting(:lms_url, 1)%>"><%= ::SystemSetting.get_setting(:lms_url, 1)%></a><br/>
+  <% lms_url = layout_site_id.present? ? ::SystemSetting.get_setting(:lms_url, layout_site_id).to_s.presence : nil %>
+  <% if lms_url.present? %>
+    <a href="<%= lms_url %>"><%= lms_url %></a><br/>
+  <% end %>
   から再ログイン後に、当該コースから、再度、eポートフォリオにアクセス下さい。
 </p>

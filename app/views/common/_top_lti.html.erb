@@ -21,9 +21,10 @@
         </a>
 
         <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
-          <% current_admin_user.sites.all.each do |site| %>
+          <% active_sites = current_admin_user.sites.active %>
+          <% active_sites.each do |site| %>
             <%= link_to site.site_name, top_path(id: site.id), class: "dropdown-item" %>
-            <% if current_admin_user.sites.last != site %>
+            <% if active_sites.last != site %>
               <div class="dropdown-divider"></div>
             <% end %>
             <!-- Message End -->

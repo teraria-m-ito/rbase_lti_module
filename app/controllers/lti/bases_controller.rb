@@ -564,7 +564,8 @@ module Lti
             else
               session[:direct_url] = Thread.current[:request].url
               session[:launch_url] = session[:direct_url].to_s.split("?")[0]
-              redirect_to new_admin_user_session_path
+              login_opts = site_id.present? ? { site_id: site_id } : {}
+              redirect_to new_admin_user_session_path(login_opts)
             end
           end
         end

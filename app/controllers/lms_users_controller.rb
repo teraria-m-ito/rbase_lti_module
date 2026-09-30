@@ -171,9 +171,7 @@ class LmsUsersController < CustomUserApplicationController
     session[:proxy_login_original_user_id] = original_admin_user_id
     session[:proxy_login_original_lms_user_id] = original_lms_user_id
     session[:current_lms_user] = @lms_user
-    if current_admin_user && current_admin_user.sites.any?
-      current_admin_user.selected_site = current_admin_user.sites.first.id
-    end
+    assign_selected_site_from_allowed!
     flash[:notice] = t(:"views.lms_users.proxy_login.notice_started")
     redirect_to root_path
   end
@@ -197,9 +195,7 @@ class LmsUsersController < CustomUserApplicationController
     session[:proxy_login_original_user_id] = nil
     session[:proxy_login_original_lms_user_id] = nil
     session[:current_lms_user] = original_lms_user_id.present? ? ::LmsUser.find_by(id: original_lms_user_id) : ::LmsUser.where(admin_user_id: original_admin_user.id).first
-    if current_admin_user && current_admin_user.sites.any?
-      current_admin_user.selected_site = current_admin_user.sites.first.id
-    end
+    assign_selected_site_from_allowed!
     flash[:notice] = t(:"views.lms_users.proxy_login.notice_stopped")
     if impersonated_lms_user_id.present? && ::LmsUser.exists?(impersonated_lms_user_id)
       redirect_to lms_user_path(impersonated_lms_user_id)
@@ -211,6 +207,16 @@ class LmsUsersController < CustomUserApplicationController
 
   def setup_values
     @sites = current_admin_user.sites.all
+  end
+
+  def assign_selected_site_from_allowed!
+    return unless current_admin_user
+
+    site_id = request_site_id
+    allowed = Array(current_admin_user.site_ids).map(&:to_i).uniq.select { |id| accepted_site_id(id) }
+    site_id = nil if site_id.present? && !allowed.include?(site_id)
+    site_id = allowed.first if site_id.blank? && allowed.size == 1
+    current_admin_user.selected_site = site_id if site_id
   end
 
   def set_new_lms_user

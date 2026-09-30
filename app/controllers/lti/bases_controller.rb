@@ -120,8 +120,9 @@ module Lti
           lms_user.save!
 
           user_info = nil
-          # 対象がMOODLEの場合、ユーザ情報を取得する
           logic = nil
+          role_updated_by_canvas = false
+          # 対象がMOODLEの場合、ユーザ情報を取得する
           if ::Logic::MoodleLogic.get_lms_type(lms_user.lms) == "MOODLE"
             logic = ::Logic::MoodleLogic.new
             user_info = logic.get_user_info(lms_user).try(:first)
@@ -146,18 +147,24 @@ module Lti
               end
             end
             lms_user.save!
-          elsif ::Logic::CanvasLogic.get_lms_type(lms_user.lms, site_id) == "CANVAS" &&
-                ::LmsUser.lti_roles_only_user?(@launch.get_launch_data['https://purl.imsglobal.org/spec/lti/claim/roles']) &&
-                lms_user.role == "MEMBER"
-            # Canvas API による履修補正は LTI roles が #User のみ、かつ現在の権限が MEMBER のときだけ
-            logic = ::Logic::CanvasLogic.new
-            user_info = logic.get_user_info(lms_user, site_id)
-            if user_info.present?
-              lms_user.lms_user_id = user_info["id"] if lms_user.lms_user_id.blank? && user_info["id"].present?
-              unless session[:lti_custom_params] && session[:lti_custom_params]["forced_role"]
-                logic.apply_member_role_from_enrollments!(lms_user, site_id)
+          else
+            canvas_lms_type = ::Logic::CanvasLogic.get_lms_type(lms_user.lms, site_id)
+            only_user = ::LmsUser.lti_roles_only_user?(@launch.get_launch_data['https://purl.imsglobal.org/spec/lti/claim/roles'])
+            Rails.logger.info("[CanvasLogic] lms_type=#{canvas_lms_type.inspect} only_user=#{only_user} role=#{lms_user.role}")
+            # USER は AdminUser ロールが MEMBER。LTI が #User のみのとき履修から STUDENT / TEACHER に補正する
+            if canvas_lms_type == "CANVAS" && only_user && lms_user.role == "USER"
+              logic = ::Logic::CanvasLogic.new
+              user_info = logic.get_user_info(lms_user, site_id)
+              Rails.logger.info("[CanvasLogic] user_info id=#{user_info.try(:[], 'id').inspect}")
+              if user_info.present?
+                lms_user.lms_user_id = user_info["id"] if user_info["id"].present?
+                unless session[:lti_custom_params] && session[:lti_custom_params]["forced_role"]
+                  logic.apply_member_role_from_enrollments!(lms_user, site_id)
+                end
+                role_updated_by_canvas = %w[STUDENT TEACHER].include?(lms_user.role)
+                lms_user.save! if lms_user.changed?
+                Rails.logger.info("[CanvasLogic] after enrollments role=#{lms_user.role} updated=#{role_updated_by_canvas}")
               end
-              lms_user.save! if lms_user.changed?
             end
           end
 
@@ -171,14 +178,14 @@ module Lti
           end
 
 
-          # admin_userの作成
-          admin_user = lms_user.create_admin_user
+          # admin_userの作成。履修補正で STUDENT/TEACHER にしたときは AdminUser の MEMBER も更新する
+          admin_user = lms_user.create_admin_user(role_updated_by_canvas)
           if lms_user.admin_user.try(:id) != admin_user.id
             lms_user.admin_user = admin_user
             lms_user.save!
           end
 
-          if current_admin_user and current_admin_user.id != admin_user.id
+          if current_admin_user && (current_admin_user.id != admin_user.id || role_updated_by_canvas)
             sign_out(current_admin_user)
           end
 

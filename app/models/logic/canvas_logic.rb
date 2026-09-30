@@ -173,79 +173,91 @@ module Logic
       end
 
       login = lms_user.username.to_s
-      if login.present?
-        response = canvas_http_get("/api/v1/users/sis_login_id:#{CGI.escape(login)}")
+      %w[sis_login_id sis_user_id].each do |prefix|
+        next if login.blank?
+        id_path = "#{prefix}:#{login}"
+        response = canvas_http_get("/api/v1/users/#{prefix}:#{CGI.escape(login)}")
         if response.try(:code) == 200
           user = JSON.parse(response.body)
-          CanvasLogic.debug_log "[CanvasLogic][get_user_info]sis_login_id:#{user['id']}"
+          CanvasLogic.debug_log "[CanvasLogic][get_user_info]#{id_path}:#{user['id']}"
           return user
         end
+        CanvasLogic.debug_log "[CanvasLogic][get_user_info] #{id_path} error:#{response.try(:code)}"
       end
 
       email = lms_user.email.to_s.downcase
-      return nil if email.blank?
+      terms = [email, login].map(&:presence).uniq
+      terms.each do |term|
+        response = canvas_http_get("/api/v1/accounts/self/users", search_term: term, per_page: 50)
+        unless response.try(:code) == 200
+          CanvasLogic.debug_log "[CanvasLogic][get_user_info] search error:#{response.try(:code)} term=#{term}"
+          next
+        end
 
-      response = canvas_http_get("/api/v1/accounts/self/users", search_term: email, per_page: 50)
-      unless response.try(:code) == 200
-        CanvasLogic.debug_log "[CanvasLogic][get_user_info] search error:#{response.try(:code)}"
-        return nil
+        users = JSON.parse(response.body)
+        users = [users] if users.is_a?(Hash)
+        found = Array(users).find { |u| u["email"].to_s.downcase == email }
+        found ||= Array(users).find { |u| u["login_id"].to_s.downcase == login.downcase }
+        found ||= Array(users).find { |u| u["sis_user_id"].to_s.downcase == login.downcase }
+        CanvasLogic.debug_log "[CanvasLogic][get_user_info]search:#{found.try(:[], 'id')} term=#{term}"
+        return found if found.present?
       end
-
-      users = JSON.parse(response.body)
-      users = [users] if users.is_a?(Hash)
-      found = Array(users).find { |u| u["email"].to_s.downcase == email }
-      found ||= Array(users).find { |u| u["login_id"].to_s.downcase == lms_user.username.to_s.downcase }
-      CanvasLogic.debug_log "[CanvasLogic][get_user_info]search:#{found.try(:[], 'id')}"
-      found
+      nil
     end
 
     ##
-    # MEMBER の履修から STUDENT / TEACHER を決める。両方あれば STUDENT。該当なしは変更しない
-    # 呼び出し側で LTI roles が #User のみ、かつ権限が MEMBER のときに限る
+    # USER（AdminUser ロールは MEMBER）の履修から STUDENT / TEACHER を決める。両方あれば STUDENT。該当なしは変更しない
     def apply_member_role_from_enrollments!(lms_user, site_id)
-      return unless lms_user.role == "MEMBER"
+      return unless lms_user.role == "USER"
       return if lms_user.lms_user_id.blank?
       return unless apply_canvas_api_settings!(site_id)
 
       enrollments = get_user_enrollments(lms_user.lms_user_id)
+      CanvasLogic.debug_log "[CanvasLogic][apply_member_role_from_enrollments] count=#{Array(enrollments).size}"
       return if enrollments.blank?
 
-      has_student = enrollments.any? { |e| %w[StudentEnrollment StudentViewEnrollment].include?(e["type"].to_s) }
-      has_teacher = enrollments.any? { |e| %w[TeacherEnrollment TaEnrollment].include?(e["type"].to_s) }
+      types = enrollments.map { |e| e["type"].to_s }
+      has_student = types.any? { |t| %w[StudentEnrollment StudentViewEnrollment].include?(t) }
+      has_teacher = types.any? { |t| %w[TeacherEnrollment TaEnrollment].include?(t) }
 
       if has_student
         lms_user.role = "STUDENT"
       elsif has_teacher
         lms_user.role = "TEACHER"
       end
-      CanvasLogic.debug_log "[CanvasLogic][apply_member_role_from_enrollments] student:#{has_student} teacher:#{has_teacher} role:#{lms_user.role}"
+      CanvasLogic.debug_log "[CanvasLogic][apply_member_role_from_enrollments] types=#{types.uniq} student:#{has_student} teacher:#{has_teacher} role:#{lms_user.role}"
     end
 
     def get_user_enrollments(canvas_user_id)
-      url = "#{self.base_url.to_s.chomp('/')}#{USER_ENROLLMENTS_API_URL.gsub(':user_id', canvas_user_id.to_s)}"
-      url += "?#{URI.encode_www_form('state[]' => 'active', per_page: 100)}"
-      result = []
+      base = "#{self.base_url.to_s.chomp('/')}#{USER_ENROLLMENTS_API_URL.gsub(':user_id', canvas_user_id.to_s)}"
+      queries = [
+        URI.encode_www_form([["state[]", "active"], ["state[]", "invited"], ["per_page", "100"]]),
+        URI.encode_www_form([["per_page", "100"]])
+      ]
+      queries.each do |query|
+        url = "#{base}?#{query}"
+        result = []
+        while url.present?
+          CanvasLogic.debug_log "[CanvasLogic][get_user_enrollments]url:#{url}"
+          response = HTTParty.get(url,
+                                  headers: {
+                                    'Authorization' => "Bearer #{self.wstoken}",
+                                    'Accept' => 'application/json',
+                                  }
+          )
+          unless response.try(:code) == 200
+            CanvasLogic.debug_log "[CanvasLogic][get_user_enrollments] error:#{response.try(:code)}"
+            break
+          end
 
-      while url.present?
-        CanvasLogic.debug_log "[CanvasLogic][get_user_enrollments]url:#{url}"
-        response = HTTParty.get(url,
-                                headers: {
-                                  'Authorization' => "Bearer #{self.wstoken}",
-                                  'Accept' => 'application/json',
-                                }
-        )
-        unless response.try(:code) == 200
-          CanvasLogic.debug_log "[CanvasLogic][get_user_enrollments] error:#{response.try(:code)}"
-          return result.presence
+          body = JSON.parse(response.body)
+          result.concat(Array(body))
+          url = canvas_link_rel_next(response.headers["link"] || response.headers["Link"])
         end
-
-        body = JSON.parse(response.body)
-        result.concat(Array(body))
-        url = canvas_link_rel_next(response.headers["link"] || response.headers["Link"])
+        CanvasLogic.debug_log "[CanvasLogic][get_user_enrollments]count:#{result.size}"
+        return result if result.present?
       end
-
-      CanvasLogic.debug_log "[CanvasLogic][get_user_enrollments]count:#{result.size}"
-      result
+      []
     end
 
     def apply_canvas_api_settings!(site_id)

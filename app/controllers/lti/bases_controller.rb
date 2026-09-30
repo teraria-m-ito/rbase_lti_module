@@ -397,8 +397,7 @@ module Lti
       end
       return from_session if from_session
 
-      raw_param = params[:site_id].presence
-      raw_param = params[:site].presence if raw_param.blank? && !params[:site].is_a?(ActionController::Parameters) && !params[:site].is_a?(Hash)
+      raw_param = request_site_param
       if raw_param.present?
         from_param = accepted_site_id(raw_param)
         return from_param if from_param && allowed.include?(from_param)
@@ -411,10 +410,7 @@ module Lti
       end
       if custom.present?
         raw_custom = custom["site_id"].presence || custom[:site_id].presence
-        if raw_custom.blank?
-          raw_custom = custom["site"].presence || custom[:site].presence
-          raw_custom = nil if raw_custom.is_a?(Hash) || raw_custom.is_a?(ActionController::Parameters)
-        end
+        raw_custom = nil if raw_custom.is_a?(Hash) || raw_custom.is_a?(ActionController::Parameters)
         if raw_custom.present?
           from_custom = accepted_site_id(raw_custom)
           return from_custom if from_custom && allowed.include?(from_custom)

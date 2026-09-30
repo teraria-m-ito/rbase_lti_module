@@ -228,9 +228,9 @@ module Logic
       CanvasLogic.debug_log "[CanvasLogic][apply_member_role_from_enrollments] count=#{Array(enrollments).size}"
       return if enrollments.blank?
 
-      types = enrollments.map { |e| e["type"].to_s }
-      has_student = types.any? { |t| %w[StudentEnrollment StudentViewEnrollment].include?(t) }
-      has_teacher = types.any? { |t| %w[TeacherEnrollment TaEnrollment].include?(t) }
+      types = enrollments.map { |e| [e["type"], e["role"]].map(&:to_s) }.flatten
+      has_student = types.any? { |t| %w[StudentEnrollment StudentViewEnrollment student Student].include?(t) }
+      has_teacher = types.any? { |t| %w[TeacherEnrollment TaEnrollment teacher ta Teacher Ta].include?(t) }
 
       if has_student
         lms_user.role = "STUDENT"
@@ -243,7 +243,9 @@ module Logic
     def get_user_enrollments(canvas_user_id)
       base = "#{self.base_url.to_s.chomp('/')}#{USER_ENROLLMENTS_API_URL.gsub(':user_id', canvas_user_id.to_s)}"
       queries = [
-        URI.encode_www_form([["state[]", "active"], ["state[]", "invited"], ["per_page", "100"]]),
+        URI.encode_www_form([["state[]", "current_and_future"], ["per_page", "100"]]),
+        URI.encode_www_form([["state[]", "current_and_concluded"], ["per_page", "100"]]),
+        URI.encode_www_form([["state[]", "active"], ["state[]", "invited"], ["state[]", "completed"], ["state[]", "creation_pending"], ["per_page", "100"]]),
         URI.encode_www_form([["per_page", "100"]])
       ]
       queries.each do |query|
@@ -258,7 +260,7 @@ module Logic
                                   }
           )
           unless response.try(:code) == 200
-            CanvasLogic.debug_log "[CanvasLogic][get_user_enrollments] error:#{response.try(:code)}"
+            CanvasLogic.debug_log "[CanvasLogic][get_user_enrollments] error:#{response.try(:code)} body=#{response.try(:body).to_s.truncate(300)}"
             break
           end
 
@@ -269,7 +271,30 @@ module Logic
         CanvasLogic.debug_log "[CanvasLogic][get_user_enrollments]count:#{result.size}"
         return result if result.present?
       end
-      []
+
+      url = "#{self.base_url.to_s.chomp('/')}/api/v1/users/#{canvas_user_id}/courses?#{URI.encode_www_form([["include[]", "enrollments"], ["enrollment_state[]", "active"], ["enrollment_state[]", "invited"], ["enrollment_state[]", "completed"], ["per_page", "100"]])}"
+      result = []
+      while url.present?
+        CanvasLogic.debug_log "[CanvasLogic][get_user_courses]url:#{url}"
+        response = HTTParty.get(url,
+                                headers: {
+                                  'Authorization' => "Bearer #{self.wstoken}",
+                                  'Accept' => 'application/json',
+                                }
+        )
+        unless response.try(:code) == 200
+          CanvasLogic.debug_log "[CanvasLogic][get_user_courses] error:#{response.try(:code)} body=#{response.try(:body).to_s.truncate(300)}"
+          break
+        end
+
+        body = JSON.parse(response.body)
+        Array(body).each do |course|
+          result.concat(Array(course["enrollments"]))
+        end
+        url = canvas_link_rel_next(response.headers["link"] || response.headers["Link"])
+      end
+      CanvasLogic.debug_log "[CanvasLogic][get_user_courses]enrollment_count:#{result.size}"
+      result
     end
 
     def apply_canvas_api_settings!(site_id)

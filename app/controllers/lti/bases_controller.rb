@@ -146,8 +146,9 @@ module Lti
             end
             lms_user.save!
           elsif ::Logic::CanvasLogic.get_lms_type(lms_user.lms, site_id) == "CANVAS" &&
-                ::LmsUser.lti_roles_only_user?(@launch.get_launch_data['https://purl.imsglobal.org/spec/lti/claim/roles'])
-            # Canvas API による履修補正は LTI roles が #User のみのときだけ
+                ::LmsUser.lti_roles_only_user?(@launch.get_launch_data['https://purl.imsglobal.org/spec/lti/claim/roles']) &&
+                lms_user.role == "MEMBER"
+            # Canvas API による履修補正は LTI roles が #User のみ、かつ現在の権限が MEMBER のときだけ
             logic = ::Logic::CanvasLogic.new
             user_info = logic.get_user_info(lms_user, site_id)
             if user_info.present?

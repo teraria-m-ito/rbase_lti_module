@@ -65,7 +65,7 @@ class LmsUser < ApplicationRecord
     entry 'OTHER', "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Other", 'Other', role_name: "member", role_div: "student", prio: 3
     entry 'PROSPECTIVESTUDENT', "http://purl.imsglobal.org/vocab/lis/v2/institution/person#ProspectiveStudent", 'ProspectiveStudent', role_name: "member", role_div: "student", prio: 4 #受験生
     entry 'OBSERVER', "http://purl.imsglobal.org/vocab/lis/v2/system/person#Observer", 'Observer', role_name: "member", role_div: "student", prio: 5
-    entry 'USER', "http://purl.imsglobal.org/vocab/lis/v2/system/person#User", 'User', role_name: "member", role_div: "student", prio: 6
+    entry 'USER', "http://purl.imsglobal.org/vocab/lis/v2/system/person#User", 'User', role_name: "member", role_div: "member", prio: 6
     entry 'ALUMNI', "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Alumni", 'Alumni', role_name: "ALUMNI", role_div: "almuni", prio: 7 #卒業生
     entry 'STUDENT', "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Student", 'Student', role_name: "STUDENT", role_div: "student", prio: 8
     entry 'LEARNER', "http://purl.imsglobal.org/vocab/lis/v2/membership#Learner", 'Learner', role_name: "STUDENT", role_div: "student", prio: 9

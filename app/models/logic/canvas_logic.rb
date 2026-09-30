@@ -200,9 +200,10 @@ module Logic
     end
 
     ##
-    # 履修から STUDENT / TEACHER を決める。両方あれば STUDENT。該当なしは変更しない
-    # 呼び出し側で LTI roles が #User のみのときに限る
+    # MEMBER の履修から STUDENT / TEACHER を決める。両方あれば STUDENT。該当なしは変更しない
+    # 呼び出し側で LTI roles が #User のみ、かつ権限が MEMBER のときに限る
     def apply_member_role_from_enrollments!(lms_user, site_id)
+      return unless lms_user.role == "MEMBER"
       return if lms_user.lms_user_id.blank?
       return unless apply_canvas_api_settings!(site_id)
 

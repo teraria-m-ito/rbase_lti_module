@@ -184,6 +184,10 @@ module Lti
           end
 
 
+          lms_user.sync_admin_user_roles_from_lti!(
+            @launch.get_launch_data["https://purl.imsglobal.org/spec/lti/claim/roles"]
+          )
+
           # admin_userの作成。履修補正で STUDENT/TEACHER にしたときは AdminUser の MEMBER も更新する
           admin_user = lms_user.create_admin_user(role_updated_by_canvas)
           if lms_user.admin_user.try(:id) != admin_user.id

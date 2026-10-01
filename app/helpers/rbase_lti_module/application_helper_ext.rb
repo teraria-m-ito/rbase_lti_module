@@ -9,6 +9,11 @@ module RbaseLtiModule
           session[:current_lms_user]
         end
 
+        # サイドバー(_aside_custom)専用。Ability と同じ判定（所持2件以上は OR、1件以下は選択中ロール）。
+        def aside_menu_enable?(controller_name, action_name)
+          Ability.new(current_admin_user, controller_name, action_name).is_enable?
+        end
+
         def proxy_login?
           session[:proxy_login_original_user_id].present?
         end

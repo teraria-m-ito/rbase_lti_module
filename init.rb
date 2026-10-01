@@ -10,6 +10,8 @@ Rbase::PluginModule.register(
   "RbaseLtiModule::AdminUserExt",
   "RbaseLtiModule::AdminSettingExt",
   "RbaseLtiModule::CustomFieldExt",
+  "RbaseLtiModule::RoleExt",
+  "RbaseLtiModule::AbilityExt",
   "RbaseLtiModule::ApplicationHelperExt",
   "RbaseLtiModule::TopHelperExt",
   "RbaseLtiModule::UserApplicationControllerExt",

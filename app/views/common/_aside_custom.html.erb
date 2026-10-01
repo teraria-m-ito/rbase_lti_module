@@ -34,7 +34,7 @@
               </p>
             </a>
             <ul class="nav nav-treeview">
-              <% if Ability.new(current_admin_user, "issues", "index").is_enable? %>
+              <% if aside_menu_enable?("issues", "index") %>
                 <li class="nav-item">
                   <%= link_to('/issues?clear=true', class: "nav-link") do %>
                     <% if is_current_page?("/issues") %>
@@ -46,7 +46,7 @@
                   <% end %>
                 </li>
               <% end %>
-              <% if Ability.new(current_admin_user, "lti/orgs", "index").is_enable? %>
+              <% if aside_menu_enable?("lti/orgs", "index") %>
                 <li class="nav-item">
                   <%= link_to('/lti/orgs?clear=true', class: "nav-link") do %>
                     <% if is_current_page?("/lti/orgs") %>
@@ -58,7 +58,7 @@
                   <% end %>
                 </li>
               <% end %>
-              <% if Ability.new(current_admin_user, "lms_users", "index").is_enable? %>
+              <% if aside_menu_enable?("lms_users", "index") %>
                 <li class="nav-item">
                   <%= link_to('/lms_users?clear=true', class: "nav-link") do %>
                     <% if is_current_page?("/lms_users") %>

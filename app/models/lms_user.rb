@@ -5,6 +5,8 @@ class LmsUser < ApplicationRecord
 
   has_many :lms_user_sites, dependent: :destroy, autosave: true
   has_many :sites, :through => :lms_user_sites
+  has_many :admin_user_roles, dependent: :destroy
+  has_many :roles, through: :admin_user_roles
 
   belongs_to :admin_user, class_name: '::AdminUser', optional: true
 
@@ -76,21 +78,58 @@ class LmsUser < ApplicationRecord
   end
 
   def self.select_lti_role(roles)
-    return nil if roles.blank?
+    lti_role_entries(roles).max_by { |entry| entry[:prio].to_i }
+  end
 
-    prio = 0
-    result = nil
-    roles.each do |role|
+  # LTI roles を selectable_attr のエントリへ変換（未登録 URI は除く）
+  def self.lti_role_entries(roles)
+    Array(roles).filter_map do |role|
       normalized = normalize_lti_role_uri(role)
-      target = ::LmsUser.role_enum.find { |x| normalize_lti_role_uri(x.key) == normalized }
-      next if target.nil?
+      next if normalized.blank?
 
-      if prio < target[:prio]
-        result = target
-        prio = target[:prio]
+      role_enum.find { |x| normalize_lti_role_uri(x.key) == normalized }
+    end
+  end
+
+  # LTI roles → roles テーブルの ID（role_name で突合。同一 Role は DISTINCT）
+  def self.role_ids_from_lti_roles(roles)
+    short_names = lti_role_entries(roles).map { |entry| entry[:role_name].to_s.strip }.reject(&:blank?).uniq
+    return [] if short_names.empty?
+
+    ::Role.where(role_short_name: short_names).distinct.pluck(:id)
+  end
+
+  def self.role_id_for_lms_role_entry(entry)
+    return nil if entry.blank?
+
+    short_name = entry[:role_name].to_s.strip
+    return nil if short_name.blank?
+
+    ::Role.find_by(role_short_name: short_name)&.id
+  end
+
+  # 起動で渡された LTI roles を roles テーブルへ変換し、所持ロールを admin_user_roles に DISTINCT で同期する。
+  # 現在選択中のロールは admin_users.role_id（既存の create_admin_user 側）。
+  def sync_admin_user_roles_from_lti!(lti_role_uris)
+    return if id.blank?
+
+    owned_ids = self.class.role_ids_from_lti_roles(lti_role_uris)
+    preferred_id = self.class.role_id_for_lms_role_entry(role_entry)
+    owned_ids << preferred_id if preferred_id.present?
+    owned_ids = owned_ids.compact.uniq
+
+    current_ids = admin_user_roles.pluck(:role_id)
+    (current_ids - owned_ids).each do |rid|
+      admin_user_roles.find_by(role_id: rid)&.destroy
+    end
+    (owned_ids - current_ids).each do |rid|
+      deleted = ::AdminUserRole.only_deleted.find_by(lms_user_id: id, role_id: rid)
+      if deleted
+        deleted.restore
+      else
+        admin_user_roles.create!(role_id: rid)
       end
     end
-    result
   end
 
   # LTI roles が system/person#User のみのとき true（http / https は同一視）

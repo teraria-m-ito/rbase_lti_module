@@ -5,13 +5,9 @@ module RbaseLtiModule
     # 1件以下は従来どおり user.role（選択中ロール）で判定する。
     def initialize_with_rbase_lti_module(user, controller_name, action_name, force = false)
       if !force && user.present? && !Thread.current[:ability_skip_held_roles]
-        req = Thread.current[:request]
-        lms_user_id = req.session[:current_lms_user].try(:id) if req.respond_to?(:session)
-        if lms_user_id.blank? && user.respond_to?(:lms_user)
-          lms_user_id = user.lms_user.try(:id)
-        end
-        if lms_user_id.present?
-          roles = ::Role.joins(:admin_user_roles).where(admin_user_roles: {lms_user_id: lms_user_id}).distinct.to_a
+        admin_user_id = user.try(:id)
+        if admin_user_id.present?
+          roles = ::Role.joins(:admin_user_roles).where(admin_user_roles: {admin_user_id: admin_user_id}).distinct.to_a
           if roles.size >= 2
             Thread.current[:ability_skip_held_roles] = true
             begin

@@ -182,7 +182,7 @@ class LmsUsersController < CustomUserApplicationController
     lms_user = ::LmsUser.find_by(id: lms_user.id) if lms_user.try(:id)
     lms_user ||= ::LmsUser.where(admin_user_id: current_admin_user.id).first
     role = ::Role.find_by(id: params[:role_id])
-    owned = lms_user && role && (lms_user.roles.exists?(id: role.id) || current_admin_user.try(:role_id) == role.id)
+    owned = lms_user && role && (current_admin_user.held_roles.exists?(id: role.id) || current_admin_user.try(:role_id) == role.id)
     unless owned
       flash[:alert] = t(:"views.lms_users.switch_role.alert_failed")
       return redirect_back fallback_location: root_path

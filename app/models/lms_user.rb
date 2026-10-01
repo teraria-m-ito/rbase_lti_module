@@ -5,8 +5,6 @@ class LmsUser < ApplicationRecord
 
   has_many :lms_user_sites, dependent: :destroy, autosave: true
   has_many :sites, :through => :lms_user_sites
-  has_many :admin_user_roles, dependent: :destroy
-  has_many :roles, through: :admin_user_roles
 
   belongs_to :admin_user, class_name: '::AdminUser', optional: true
 
@@ -111,23 +109,24 @@ class LmsUser < ApplicationRecord
   # 起動で渡された LTI roles を roles テーブルへ変換し、所持ロールを admin_user_roles に DISTINCT で同期する。
   # 現在選択中のロールは admin_users.role_id（既存の create_admin_user 側）。
   def sync_admin_user_roles_from_lti!(lti_role_uris)
-    return if id.blank?
+    admin_user = self.admin_user
+    return if admin_user.blank?
 
     owned_ids = self.class.role_ids_from_lti_roles(lti_role_uris)
     preferred_id = self.class.role_id_for_lms_role_entry(role_entry)
     owned_ids << preferred_id if preferred_id.present?
     owned_ids = owned_ids.compact.uniq
 
-    current_ids = admin_user_roles.pluck(:role_id)
+    current_ids = admin_user.admin_user_roles.pluck(:role_id)
     (current_ids - owned_ids).each do |rid|
-      admin_user_roles.find_by(role_id: rid)&.destroy
+      admin_user.admin_user_roles.find_by(role_id: rid)&.destroy
     end
     (owned_ids - current_ids).each do |rid|
-      deleted = ::AdminUserRole.only_deleted.find_by(lms_user_id: id, role_id: rid)
+      deleted = ::AdminUserRole.only_deleted.find_by(admin_user_id: admin_user.id, role_id: rid)
       if deleted
         deleted.restore
       else
-        admin_user_roles.create!(role_id: rid)
+        admin_user.admin_user_roles.create!(role_id: rid)
       end
     end
   end

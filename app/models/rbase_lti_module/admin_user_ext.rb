@@ -7,6 +7,8 @@ module RbaseLtiModule
     def self.included(mod)
       mod.extend(ClassMethods)
       mod.module_eval do
+        has_many :admin_user_roles, dependent: :destroy
+        has_many :held_roles, through: :admin_user_roles, source: :role
       end
     end
 

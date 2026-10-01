@@ -201,15 +201,9 @@ class LmsUsersController < CustomUserApplicationController
     session[:current_lms_user] = lms_user
 
     role_div = lms_user.role_entry.try(:[], :role_div)
-    site_id = request_site_id
-    path = nil
-    if role_div.present? && site_id.present?
-      launch_urls = SystemSetting.get_multivalue_list(:canvas_redirect_url, site_id)
-      path = launch_urls.find { |x| x[:value_div].to_s == role_div.to_s }.try(:[], :value).to_s.strip
-      path = path.present? ? (path.start_with?("/") ? path : "/#{path}") : nil
-    end
+    path = canvas_redirect_path(role_div, request_site_id) if respond_to?(:canvas_redirect_path, true)
     if path.blank?
-      Rails.logger.error("canvas_redirect_url 未設定 role=#{lms_user.role.inspect} role_div=#{role_div.inspect} site_id=#{site_id.inspect}")
+      Rails.logger.error("canvas_redirect_url 未設定 role=#{lms_user.role.inspect} role_div=#{role_div.inspect} site_id=#{request_site_id.inspect}")
       flash[:alert] = t(:"views.lms_users.switch_role.alert_failed")
       return redirect_back fallback_location: root_path
     end

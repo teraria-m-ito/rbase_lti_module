@@ -199,8 +199,8 @@ module Lti
           # ログイン処理を実行
           sign_in(admin_user) unless current_admin_user
 
-          # LTIログインセッションを設定
-          session[:current_lms_user] = ::LmsUser.where(admin_user_id: current_admin_user.id).first
+          # LTIログインセッションを設定（起動した LMS ユーザをそのまま使う）
+          session[:current_lms_user] = lms_user
           current_admin_user.selected_site = site_id
 
           @launch.set_token("auth", session[:current_lms_user].id)

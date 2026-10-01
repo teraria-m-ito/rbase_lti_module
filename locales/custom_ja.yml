@@ -44,6 +44,7 @@ ja:
       lms_users_update: "更新"
       lms_users_destroy: "削除"
       lms_users_proxy_login: "代理ログイン"
+      lms_users_switch_role: "ロール切替"
 
       lms_user_imports_create: "LMSユーザインポート登録"
       lms_user_imports_download: "LMSユーザインポートダウンロード"
@@ -280,6 +281,8 @@ ja:
         button_back: "戻る"
         button_proxy_login: "代理ログイン"
         confirm_proxy_login: "代理ログインします。よろしいですか？"
+      switch_role:
+        alert_failed: "ロールを切り替えできませんでした。"
       proxy_login:
         badge: "代理"
         confirm_stop: "代理ログインを終了します。よろしいですか？"

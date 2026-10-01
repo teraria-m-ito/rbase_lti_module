@@ -41,6 +41,7 @@ en:
       lms_users_update: "Update"
       lms_users_destroy: "Delete"
       lms_users_proxy_login: "Proxy login"
+      lms_users_switch_role: "Switch role"
 
       lms_user_imports_create: "LMS user import (register)"
       lms_user_imports_download: "LMS user import (download)"
@@ -265,6 +266,8 @@ en:
         button_back: "Back"
         button_proxy_login: "Proxy login"
         confirm_proxy_login: "Log in as this user. Are you sure?"
+      switch_role:
+        alert_failed: "Could not switch role."
       proxy_login:
         badge: "Proxy"
         confirm_stop: "End proxy login. Are you sure?"

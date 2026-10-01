@@ -6,7 +6,7 @@ class LmsUsersController < CustomUserApplicationController
   before_action :setup_values, only: [:index, :show, :new, :create, :edit, :update]
   before_action :set_lms_user_custom_fields, only: [:new, :edit, :show]
   before_action :set_inst_dept
-  skip_before_action :check_permission, only: [:stop_proxy_login]
+  skip_before_action :check_permission, only: [:stop_proxy_login, :switch_role]
 
   respond_to :html
   def index
@@ -174,6 +174,46 @@ class LmsUsersController < CustomUserApplicationController
     assign_selected_site_from_allowed!
     flash[:notice] = t(:"views.lms_users.proxy_login.notice_started")
     redirect_to root_path
+  end
+
+  desc :display_name => "lms_users_switch_role"
+  def switch_role
+    lms_user = session[:current_lms_user]
+    lms_user = ::LmsUser.find_by(id: lms_user.id) if lms_user.try(:id)
+    lms_user ||= ::LmsUser.where(admin_user_id: current_admin_user.id).first
+    role = ::Role.find_by(id: params[:role_id])
+    owned = lms_user && role && (lms_user.roles.exists?(id: role.id) || current_admin_user.try(:role_id) == role.id)
+    unless owned
+      flash[:alert] = t(:"views.lms_users.switch_role.alert_failed")
+      return redirect_back fallback_location: root_path
+    end
+
+    entries = ::LmsUser.role_entries.select { |e| e[:role_name].to_s == role.role_short_name.to_s }
+    entry = entries.find { |e| e.id.to_s == lms_user.role.to_s } ||
+            entries.find { |e| e.id.to_s.casecmp(role.role_short_name.to_s).zero? } ||
+            entries.max_by { |e| e[:prio].to_i }
+    lms_user.role = entry[:id] if entry
+    lms_user.save! if lms_user.changed?
+
+    current_admin_user.role_id = role.id
+    current_admin_user.save!
+
+    session[:current_lms_user] = lms_user
+
+    role_div = lms_user.role_entry.try(:[], :role_div)
+    site_id = request_site_id
+    path = nil
+    if role_div.present? && site_id.present?
+      launch_urls = SystemSetting.get_multivalue_list(:canvas_redirect_url, site_id)
+      path = launch_urls.find { |x| x[:value_div].to_s == role_div.to_s }.try(:[], :value).to_s.strip
+      path = path.present? ? (path.start_with?("/") ? path : "/#{path}") : nil
+    end
+    if path.blank?
+      Rails.logger.error("canvas_redirect_url 未設定 role=#{lms_user.role.inspect} role_div=#{role_div.inspect} site_id=#{site_id.inspect}")
+      flash[:alert] = t(:"views.lms_users.switch_role.alert_failed")
+      return redirect_back fallback_location: root_path
+    end
+    redirect_to path
   end
 
   def stop_proxy_login

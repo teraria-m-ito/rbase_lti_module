@@ -20,6 +20,7 @@ Rails.application.routes.draw do
     end
     collection do
       post :stop_proxy_login
+      get :switch_role
     end
   end
 

@@ -59,12 +59,18 @@ module Lti
     def process_launch_date
       begin
         ActiveRecord::Base.transaction do
-          # Canvas LMS 側のログアウト／ログイン後の再起動では、前回の画面に戻さない
-          session.delete(:direct_url)
-          session.delete(:launch_url)
+          # Canvas LMS のログインユーザが変わったときだけ前回画面を捨てる。
+          # 同一ユーザの再起動では launch_url を残し、元の画面へ戻す。
+          launch_data = @launch.get_launch_data
+          subject = "#{launch_data['iss']}|#{launch_data['sub']}"
+          if session[:lti_subject].present? && session[:lti_subject] != subject
+            session.delete(:direct_url)
+            session.delete(:launch_url)
+          end
+          session[:lti_subject] = subject
 
           # カスタムパラメータの取得
-          custom_params = @launch.get_launch_data["https://purl.imsglobal.org/spec/lti/claim/custom"]
+          custom_params = launch_data["https://purl.imsglobal.org/spec/lti/claim/custom"]
           if custom_params.present?
             session[:lti_custom_params] = custom_params
           else
@@ -422,6 +428,9 @@ module Lti
     end
 
     def post_launch_redirect_path(lms_user, site_id)
+      remembered = session[:direct_url].presence || session[:launch_url].presence
+      return remembered if lti_returnable_path?(remembered)
+
       @launch_url.presence || lti_default_post_launch_path
     end
 

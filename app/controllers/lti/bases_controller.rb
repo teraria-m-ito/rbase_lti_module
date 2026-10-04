@@ -59,6 +59,10 @@ module Lti
     def process_launch_date
       begin
         ActiveRecord::Base.transaction do
+          # Canvas LMS 側のログアウト／ログイン後の再起動では、前回の画面に戻さない
+          session.delete(:direct_url)
+          session.delete(:launch_url)
+
           # カスタムパラメータの取得
           custom_params = @launch.get_launch_data["https://purl.imsglobal.org/spec/lti/claim/custom"]
           if custom_params.present?
@@ -418,9 +422,6 @@ module Lti
     end
 
     def post_launch_redirect_path(lms_user, site_id)
-      remembered = session.delete(:direct_url).presence || session[:launch_url].presence
-      return remembered if lti_returnable_path?(remembered)
-
       @launch_url.presence || lti_default_post_launch_path
     end
 

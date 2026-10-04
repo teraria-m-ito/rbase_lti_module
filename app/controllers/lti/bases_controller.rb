@@ -428,8 +428,9 @@ module Lti
     end
 
     def post_launch_redirect_path(lms_user, site_id)
-      # LTI 再起動の HTTP 着地は常に HOME。同一 iframe 内の前回画面復帰は sessionStorage 側。
-      # Rails session の launch_url を使うと、Canvas ログアウト後も前回画面が残る。
+      remembered = session[:direct_url].presence || session[:launch_url].presence
+      return remembered if lti_returnable_path?(remembered)
+
       @launch_url.presence || lti_default_post_launch_path
     end
 

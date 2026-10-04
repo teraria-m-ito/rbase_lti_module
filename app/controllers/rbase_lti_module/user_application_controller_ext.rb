@@ -154,12 +154,12 @@ module RbaseLtiModule
           # List of errors is available in response.errors array
         end
 
-        redirect_to root_path, status: :see_other
-        # if session[:direct_url]
-        #   redirect_to session[:direct_url], status: :see_other
-        # else
-        #   redirect_to root_path, status: :see_other
-        # end
+        if session[:direct_url]
+          url = session.delete(:direct_url)
+          redirect_to url, status: :see_other
+        else
+          redirect_to root_path, status: :see_other
+        end
       end
     end
 

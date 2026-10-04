@@ -418,7 +418,35 @@ module Lti
     end
 
     def post_launch_redirect_path(lms_user, site_id)
+      remembered = session.delete(:direct_url).presence || session[:launch_url].presence
+      return remembered if lti_returnable_path?(remembered)
+
       @launch_url.presence || lti_default_post_launch_path
+    end
+
+    # ログイン前に開いていた画面、または LTI 内で最後に見ていた画面へ戻す。
+    # HOME / launch 系は初期着地なので、それらだけ覚えていても元画面復帰に使わない。
+    def lti_returnable_path?(url)
+      return false if url.blank?
+
+      path = url.to_s
+      if path.start_with?("http")
+        begin
+          uri = URI.parse(path)
+          return false if uri.host.present? && uri.host != request.host
+          path = uri.request_uri
+        rescue URI::InvalidURIError
+          return false
+        end
+      end
+      return false unless path.start_with?("/")
+      return false if path.start_with?("//")
+      return false if path == root_path
+      return false if path.include?("/login") || path.include?("/launch") || path.include?("/jwks")
+      return false if path.start_with?("/canvas/homes") || path.start_with?("/lti_top")
+      return false if path.start_with?(new_admin_user_session_path)
+
+      true
     end
 
     # LTIDatabase / LmsUser に紐づく有効サイトからカレントサイトを決める。Site.first は使わない。
@@ -590,6 +618,7 @@ module Lti
               case sso_type
               when "saml2" then
                 session[:direct_url] = Thread.current[:request].fullpath
+                session[:launch_url] = session[:direct_url].to_s.split("?")[0]
                 redirect_to_saml_idp
               end
             else
@@ -599,6 +628,18 @@ module Lti
               redirect_to new_admin_user_session_path(login_opts)
             end
           end
+        end
+      else
+        if session[:direct_url]
+          url = session[:direct_url].dup
+          session[:direct_url] = nil
+          if lti_returnable_path?(url)
+            redirect_to url
+            return
+          end
+        end
+        if request.get? && !%w[login launch jwks].include?(action_name) && lti_returnable_path?(request.path)
+          session[:launch_url] = request.path
         end
       end
     end

@@ -6,11 +6,11 @@ Gem::Specification.new do |spec|
   spec.name = "rbase_lti_module"
   spec.version = RbaseLtiModule::VERSION
   spec.authors = ["Minoru Ito"]
-  spec.email = ["minoru@i-do-inc.jp"]
+  spec.email = ["m-ito@teraria-labs.jp"]
 
   spec.summary = ""
   spec.description = ""
-  spec.homepage = "https://www.i-do-inc.jp"
+  spec.homepage = "https://www.teraria-labs.jp"
   spec.license = "GPLv3"
   spec.required_ruby_version = ">= 2.6.0"
 

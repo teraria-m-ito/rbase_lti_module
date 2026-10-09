@@ -94,7 +94,7 @@ class LTIOrgImport < ApplicationRecord
 
   def import_csv
     @lti_org_import_rows = []
-    filepath = self.lti_org_import_attachments[0].document.path
+    filepath = self.lti_org_import_attachments[0].document.local_path
     xlsx = Roo::Excelx.new(filepath)
     xlsx.default_sheet = xlsx.sheets[0]
     custom_fields = self.class.lti_org_custom_fields

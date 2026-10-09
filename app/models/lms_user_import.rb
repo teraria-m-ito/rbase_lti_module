@@ -92,7 +92,7 @@ class LmsUserImport < ApplicationRecord
   def import_csv
     @lms_user_import_rows = []
     header = false
-    filepath = self.lms_user_import_attachments[0].document.path
+    filepath = self.lms_user_import_attachments[0].document.local_path
     xlsx = Roo::Excelx.new(filepath)
     xlsx.default_sheet = xlsx.sheets[0]
     available_site_ids = current_admin_user&.site_ids || []

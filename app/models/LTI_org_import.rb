@@ -5,10 +5,6 @@ class LTIOrgImport < ApplicationRecord
   self.table_name = "lti_org_imports"
   include ApplicationConcern
 
-  before_create :created_userstamp
-  before_update :updated_userstamp
-  after_destroy :destroyed_userstamp
-
   include ::SelectableAttr::Base
 
   has_many :lti_org_import_attachments, class_name: '::LTIOrgImportAttachment', dependent: :destroy

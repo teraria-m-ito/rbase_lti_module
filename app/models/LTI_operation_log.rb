@@ -2,8 +2,6 @@ class LTIOperationLog < ApplicationRecord
   include ::Rbase::PluginModule::Extendable # 継承を許可する宣言（必須）
   self.table_name = "lti_operation_logs"
 
-  before_create :created_userstamp
-
   include ::SelectableAttr::Base
 
   belongs_to :lms_user, optional: true

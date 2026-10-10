@@ -4,10 +4,6 @@ require 'roo'
 class LmsUserImport < ApplicationRecord
   include ApplicationConcern
 
-  before_create :created_userstamp
-  before_update :updated_userstamp
-  after_destroy :destroyed_userstamp
-
   include ::SelectableAttr::Base
 
   has_many :lms_user_import_attachments, class_name: '::LmsUserImportAttachment', dependent: :destroy

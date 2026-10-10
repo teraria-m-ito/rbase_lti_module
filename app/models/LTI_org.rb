@@ -2,10 +2,6 @@ class LTIOrg < ApplicationRecord
   include ::Rbase::PluginModule::Extendable # 継承を許可する宣言（必須）
   self.table_name = "lti_orgs"
 
-  before_create :created_userstamp
-  before_update :updated_userstamp
-  after_destroy :destroyed_userstamp
-  
   has_ancestry
   
   include ::SelectableAttr::Base

@@ -2,10 +2,6 @@ class LTIImportHistory < ApplicationRecord
   include ::Rbase::PluginModule::Extendable # 継承を許可する宣言（必須）
   include ::SelectableAttr::Base
 
-  before_create :created_userstamp
-  before_update :updated_userstamp
-  after_destroy :destroyed_userstamp
-
   belongs_to :target, polymorphic: true, optional: true
 
   has_one :delayed_job, class_name: "::Delayed::Job", primary_key: "provider_job_id", foreign_key: "id"

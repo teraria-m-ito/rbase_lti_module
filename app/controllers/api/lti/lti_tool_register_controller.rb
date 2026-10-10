@@ -145,7 +145,10 @@ module Api
           http.open_timeout = 5
           http.request(req)
         end
-        return nil unless res.is_a?(Net::HTTPSuccess)
+        unless res.is_a?(Net::HTTPSuccess)
+          Rails.logger.warn("[fetch_json]failed: #{res.code} #{res.body.to_s[0, 300]}")
+          return nil
+        end
         Rails.logger.debug("[fetch_json]res:#{res.body}")
         JSON.parse(res.body)
       end
@@ -164,7 +167,10 @@ module Api
           http.open_timeout = 5
           http.request(req)
         end
-        return nil unless res.is_a?(Net::HTTPSuccess)
+        unless res.is_a?(Net::HTTPSuccess)
+          Rails.logger.warn("[post_json_with_bearer]failed: #{res.code} #{res.body.to_s[0, 300]}")
+          return nil
+        end
         Rails.logger.debug("[post_json_with_bearer]res:#{res.body}")
         result = res.body
         match = result.to_s.match(/.*\{(.+)\}.*\z/)

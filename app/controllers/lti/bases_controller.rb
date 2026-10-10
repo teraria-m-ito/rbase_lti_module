@@ -3,6 +3,9 @@ module Lti
     include ::Rbase::PluginModule::Extendable # 継承を許可する宣言（必須）
     include RbaseLtiModule::LtiIframeContext
     include Lti::OperationLogCreation
+    # LMS からのクロスサイト POST（OIDC ログイン開始・id_token の受け取り）で CSRF トークンを持たない。
+    # 正当性は state / nonce と id_token の署名検証で担保する。
+    skip_forgery_protection only: [:login, :launch]
     before_action :set_login
     before_action :set_restrict_display
     before_action :redirect_root, except: [:login, :launch]

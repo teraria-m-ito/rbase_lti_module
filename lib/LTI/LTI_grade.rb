@@ -111,16 +111,17 @@ module LTI
     end
 
     def __toString
+      # 点数なし（コメントのみ等）の送信が 0 点にならないよう、未設定の項目は送らない
       return {
-        scoreGiven: @score_given.to_f,
-        scoreMaximum: @score_maximum.to_f,
+        scoreGiven: @score_given.nil? ? nil : @score_given.to_f,
+        scoreMaximum: @score_given.nil? || @score_maximum.nil? ? nil : @score_maximum.to_f,
         comment: @comment,
         activityProgress: @activity_progress,
         gradingProgress: @grading_progress,
         timestamp: @timestamp,
         userId: @user_id,
         submissionReview: @submission_review
-      }
+      }.compact
     end
   end
 end

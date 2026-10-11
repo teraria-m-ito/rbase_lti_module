@@ -5,7 +5,7 @@ require 'cgi'
 require 'uri'
 
 module Logic
-  class CanvasLogic < Logic::LmsApiBaseLogic
+  class CanvasApiLogic < Logic::LmsApiBaseLogic
     include ActiveModel::Model
     include Rails.application.routes.url_helpers
 
@@ -95,7 +95,7 @@ module Logic
 
       url = "#{self.base_url}#{ACCOUNT_INFO_API_URL}"
 
-      CanvasLogic.debug_log "[CanvasLogic][get_account_info]url:#{url} / token:#{self.wstoken}"
+      CanvasApiLogic.debug_log "[CanvasApiLogic][get_account_info]url:#{url} / token:#{self.wstoken}"
 
       response = HTTParty.get(url,
                               headers: {
@@ -105,12 +105,12 @@ module Logic
       )
 
       if response.try(:code) != 200
-        CanvasLogic.debug_log "[CanvasLogic][get_account_info] error:#{response.try(:code)}"
-        CanvasLogic.debug_log JSON.parse(response.body)
+        CanvasApiLogic.debug_log "[CanvasApiLogic][get_account_info] error:#{response.try(:code)}"
+        CanvasApiLogic.debug_log JSON.parse(response.body)
         return nil
       end
 
-      CanvasLogic.debug_log "[CanvasLogic][get_account_info]response:#{response}"
+      CanvasApiLogic.debug_log "[CanvasApiLogic][get_account_info]response:#{response}"
       JSON.parse(response.body)
     end
 
@@ -139,7 +139,7 @@ module Logic
     ##
     # canvas apiを通して、サブアカウントの一覧を取得する
     def get_subaccount_list(admin_user, root_account_id = nil)
-      CanvasLogic.debug_log "[CanvasLogic][get_subaccount_list]admin_user:#{admin_user.id}"
+      CanvasApiLogic.debug_log "[CanvasApiLogic][get_subaccount_list]admin_user:#{admin_user.id}"
 
       root_account_id = get_root_account_id(admin_user) unless root_account_id
 
@@ -150,7 +150,7 @@ module Logic
         url = "#{self.base_url}#{SUBACCOUNT_LIST_API_URL}"
 
         url = url.gsub(":account_id", root_account_id.to_s)
-        CanvasLogic.debug_log "[CanvasLogic][get_subaccount_list]url:#{url} / token:#{self.wstoken}"
+        CanvasApiLogic.debug_log "[CanvasApiLogic][get_subaccount_list]url:#{url} / token:#{self.wstoken}"
 
         response = HTTParty.get(url,
                                  headers: {
@@ -160,11 +160,11 @@ module Logic
         )
 
         if response.try(:code) != 200
-          CanvasLogic.debug_log "[CanvasLogic][get_subaccount_list] error:#{response.try(:code)}"
+          CanvasApiLogic.debug_log "[CanvasApiLogic][get_subaccount_list] error:#{response.try(:code)}"
           return nil
         end
 
-        CanvasLogic.debug_log "[CanvasLogic][get_subaccount_list]response:#{response}"
+        CanvasApiLogic.debug_log "[CanvasApiLogic][get_subaccount_list]response:#{response}"
         JSON.parse(response.body)
       end
     end
@@ -178,10 +178,10 @@ module Logic
         response = canvas_http_get("/api/v1/users/#{lms_user.lms_user_id}")
         if response.try(:code) == 200
           user = JSON.parse(response.body)
-          CanvasLogic.debug_log "[CanvasLogic][get_user_info]id:#{user['id']}"
+          CanvasApiLogic.debug_log "[CanvasApiLogic][get_user_info]id:#{user['id']}"
           return user
         end
-        CanvasLogic.debug_log "[CanvasLogic][get_user_info] by id error:#{response.try(:code)}"
+        CanvasApiLogic.debug_log "[CanvasApiLogic][get_user_info] by id error:#{response.try(:code)}"
       end
 
       login = lms_user.username.to_s
@@ -191,10 +191,10 @@ module Logic
         response = canvas_http_get("/api/v1/users/#{prefix}:#{CGI.escape(login)}")
         if response.try(:code) == 200
           user = JSON.parse(response.body)
-          CanvasLogic.debug_log "[CanvasLogic][get_user_info]#{id_path}:#{user['id']}"
+          CanvasApiLogic.debug_log "[CanvasApiLogic][get_user_info]#{id_path}:#{user['id']}"
           return user
         end
-        CanvasLogic.debug_log "[CanvasLogic][get_user_info] #{id_path} error:#{response.try(:code)}"
+        CanvasApiLogic.debug_log "[CanvasApiLogic][get_user_info] #{id_path} error:#{response.try(:code)}"
       end
 
       email = lms_user.email.to_s.downcase
@@ -202,7 +202,7 @@ module Logic
       terms.each do |term|
         response = canvas_http_get("/api/v1/accounts/self/users", search_term: term, per_page: 50)
         unless response.try(:code) == 200
-          CanvasLogic.debug_log "[CanvasLogic][get_user_info] search error:#{response.try(:code)} term=#{term}"
+          CanvasApiLogic.debug_log "[CanvasApiLogic][get_user_info] search error:#{response.try(:code)} term=#{term}"
           next
         end
 
@@ -211,7 +211,7 @@ module Logic
         found = Array(users).find { |u| u["email"].to_s.downcase == email }
         found ||= Array(users).find { |u| u["login_id"].to_s.downcase == login.downcase }
         found ||= Array(users).find { |u| u["sis_user_id"].to_s.downcase == login.downcase }
-        CanvasLogic.debug_log "[CanvasLogic][get_user_info]search:#{found.try(:[], 'id')} term=#{term}"
+        CanvasApiLogic.debug_log "[CanvasApiLogic][get_user_info]search:#{found.try(:[], 'id')} term=#{term}"
         return found if found.present?
       end
       nil
@@ -225,7 +225,7 @@ module Logic
       return unless apply_canvas_api_settings!(site_id)
 
       enrollments = get_user_enrollments(lms_user.lms_user_id)
-      CanvasLogic.debug_log "[CanvasLogic][apply_member_role_from_enrollments] count=#{Array(enrollments).size}"
+      CanvasApiLogic.debug_log "[CanvasApiLogic][apply_member_role_from_enrollments] count=#{Array(enrollments).size}"
       return if enrollments.blank?
 
       types = enrollments.map { |e| [e["type"], e["role"]].map(&:to_s) }.flatten
@@ -237,7 +237,7 @@ module Logic
       elsif has_teacher
         lms_user.role = "TEACHER"
       end
-      CanvasLogic.debug_log "[CanvasLogic][apply_member_role_from_enrollments] types=#{types.uniq} student:#{has_student} teacher:#{has_teacher} role:#{lms_user.role}"
+      CanvasApiLogic.debug_log "[CanvasApiLogic][apply_member_role_from_enrollments] types=#{types.uniq} student:#{has_student} teacher:#{has_teacher} role:#{lms_user.role}"
     end
 
     def get_user_enrollments(canvas_user_id)
@@ -252,7 +252,7 @@ module Logic
         url = "#{base}?#{query}"
         result = []
         while url.present?
-          CanvasLogic.debug_log "[CanvasLogic][get_user_enrollments]url:#{url}"
+          CanvasApiLogic.debug_log "[CanvasApiLogic][get_user_enrollments]url:#{url}"
           response = HTTParty.get(url,
                                   headers: {
                                     'Authorization' => "Bearer #{self.wstoken}",
@@ -260,7 +260,7 @@ module Logic
                                   }
           )
           unless response.try(:code) == 200
-            CanvasLogic.debug_log "[CanvasLogic][get_user_enrollments] error:#{response.try(:code)} body=#{response.try(:body).to_s.truncate(300)}"
+            CanvasApiLogic.debug_log "[CanvasApiLogic][get_user_enrollments] error:#{response.try(:code)} body=#{response.try(:body).to_s.truncate(300)}"
             break
           end
 
@@ -268,14 +268,14 @@ module Logic
           result.concat(Array(body))
           url = canvas_link_rel_next(response.headers["link"] || response.headers["Link"])
         end
-        CanvasLogic.debug_log "[CanvasLogic][get_user_enrollments]count:#{result.size}"
+        CanvasApiLogic.debug_log "[CanvasApiLogic][get_user_enrollments]count:#{result.size}"
         return result if result.present?
       end
 
       url = "#{self.base_url.to_s.chomp('/')}/api/v1/users/#{canvas_user_id}/courses?#{URI.encode_www_form([["include[]", "enrollments"], ["enrollment_state[]", "active"], ["enrollment_state[]", "invited"], ["enrollment_state[]", "completed"], ["per_page", "100"]])}"
       result = []
       while url.present?
-        CanvasLogic.debug_log "[CanvasLogic][get_user_courses]url:#{url}"
+        CanvasApiLogic.debug_log "[CanvasApiLogic][get_user_courses]url:#{url}"
         response = HTTParty.get(url,
                                 headers: {
                                   'Authorization' => "Bearer #{self.wstoken}",
@@ -283,7 +283,7 @@ module Logic
                                 }
         )
         unless response.try(:code) == 200
-          CanvasLogic.debug_log "[CanvasLogic][get_user_courses] error:#{response.try(:code)} body=#{response.try(:body).to_s.truncate(300)}"
+          CanvasApiLogic.debug_log "[CanvasApiLogic][get_user_courses] error:#{response.try(:code)} body=#{response.try(:body).to_s.truncate(300)}"
           break
         end
 
@@ -293,7 +293,7 @@ module Logic
         end
         url = canvas_link_rel_next(response.headers["link"] || response.headers["Link"])
       end
-      CanvasLogic.debug_log "[CanvasLogic][get_user_courses]enrollment_count:#{result.size}"
+      CanvasApiLogic.debug_log "[CanvasApiLogic][get_user_courses]enrollment_count:#{result.size}"
       result
     end
 
@@ -304,7 +304,7 @@ module Logic
       self.wstoken = ::SystemSetting.get_setting(:canvas_api_token, id) unless self.wstoken
       self.base_url = ::SystemSetting.get_setting(:canvas_api_base_url, id) unless self.base_url
       if self.wstoken.blank? || self.base_url.blank?
-        CanvasLogic.debug_log "[CanvasLogic] canvas_api_token / canvas_api_base_url 未設定 site_id=#{id}"
+        CanvasApiLogic.debug_log "[CanvasApiLogic] canvas_api_token / canvas_api_base_url 未設定 site_id=#{id}"
         return false
       end
       true
@@ -313,7 +313,7 @@ module Logic
     def canvas_http_get(path, query = {})
       url = "#{self.base_url.to_s.chomp('/')}#{path}"
       url += "?#{query.to_query}" if query.present?
-      CanvasLogic.debug_log "[CanvasLogic][GET]#{url}"
+      CanvasApiLogic.debug_log "[CanvasApiLogic][GET]#{url}"
       HTTParty.get(url,
                    headers: {
                      'Authorization' => "Bearer #{self.wstoken}",

@@ -236,7 +236,7 @@ class LmsUser < ApplicationRecord
   end
 
   def get_lms_type
-    ::Logic::MoodleLogic.get_lms_type(self.lms)
+    ::Logic::MoodleApiLogic.get_lms_type(self.lms)
   end
 
   # 管理者（Admin / Manager）権限を持つか。切替可能な所持ロールも含めて判定する

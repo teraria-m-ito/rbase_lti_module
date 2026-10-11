@@ -82,9 +82,9 @@ module RbaseLtiModule
 
             # 対象がMOODLEの場合、ユーザ情報を取得する
             logic = nil
-            ::Rails.logger.info("[lms_logic]lms_type:#{::Logic::MoodleLogic.get_lms_type(lms_user.lms)}")
-            if ::Logic::MoodleLogic.get_lms_type(lms_user.lms) == "MOODLE"
-              logic = ::Logic::MoodleLogic.new
+            ::Rails.logger.info("[lms_logic]lms_type:#{::Logic::MoodleApiLogic.get_lms_type(lms_user.lms)}")
+            if ::Logic::MoodleApiLogic.get_lms_type(lms_user.lms) == "MOODLE"
+              logic = ::Logic::MoodleApiLogic.new
               user_info = logic.get_user_info(lms_user).try(:first)
 
               ::Rails.logger.info("[lms_logic]user_info:#{user_info}")
@@ -102,7 +102,7 @@ module RbaseLtiModule
                 #カスタムフィールの設定
                 customfields = user_info["customfields"] || []
                 customfields.each do |customfield|
-                  if lti_field_name = ::Logic::MoodleLogic.get_lms_field_type(customfield["shortname"])
+                  if lti_field_name = ::Logic::MoodleApiLogic.get_lms_field_type(customfield["shortname"])
                     lms_user.send("#{lti_field_name}=", customfield["value"])
                   end
                 end

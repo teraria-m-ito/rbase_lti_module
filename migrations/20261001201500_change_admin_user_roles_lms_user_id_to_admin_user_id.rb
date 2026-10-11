@@ -19,12 +19,18 @@ class ChangeAdminUserRolesLmsUserIdToAdminUserId < ActiveRecord::Migration[7.0]
       end
 
       execute "DELETE FROM admin_user_roles WHERE admin_user_id IS NULL"
+      # 同じ管理ユーザ・ロールの重複は 1 件に寄せる。
+      # 論理削除済みの行を残して有効な行を消さないよう、有効な行を優先し、同じ状態どうしでは ID が小さい行を残す
       execute <<~SQL
         DELETE aur FROM admin_user_roles aur
         INNER JOIN admin_user_roles keep
           ON keep.admin_user_id = aur.admin_user_id
          AND keep.role_id = aur.role_id
-         AND keep.id < aur.id
+         AND keep.id <> aur.id
+         AND (
+           (keep.deleted_at IS NULL AND aur.deleted_at IS NOT NULL)
+           OR ((keep.deleted_at IS NULL) = (aur.deleted_at IS NULL) AND keep.id < aur.id)
+         )
       SQL
 
       remove_index :admin_user_roles, :lms_user_id if index_exists?(:admin_user_roles, :lms_user_id)

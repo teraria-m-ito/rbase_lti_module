@@ -16,6 +16,10 @@ module LTI
         ::Rails.logger.info("[LtiOrgImportJob]error")
       end
       ::Rails.logger.info("[LtiOrgImportJob]finished.....")
+    rescue => e
+      # 再試行で同じ失敗を繰り返して「処理中」のまま残らないよう、エラーとして記録して終了する
+      ::Rails.logger.error("[LtiOrgImportJob]#{e.class}: #{e.message}\n#{e.backtrace&.first(10)&.join("\n")}")
+      ::LTIOrgImportError.create!(lti_org_import_id: args[0], line_no: 0, error_message: "#{e.class}: #{e.message}".truncate(255)) if ::LTIOrgImport.exists?(args[0])
     end
   end
 end

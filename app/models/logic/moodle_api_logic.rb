@@ -3,7 +3,7 @@ require 'json'
 require 'mechanize'
 
 module Logic
-  class MoodleLogic < Logic::LmsApiBaseLogic
+  class MoodleApiLogic < Logic::LmsApiBaseLogic
     include ActiveModel::Model
     include Rails.application.routes.url_helpers
 
@@ -108,34 +108,34 @@ module Logic
       function = "core_user_get_users_by_field"
       url = "#{lms_user.lms}/webservice/rest/server.php?wstoken=#{self.wstoken}&wsfunction=#{function}&moodlewsrestformat=json&field=username&values[0]=#{lms_user.username.to_s.downcase}"
 
-      MoodleLogic.debug_log "[MoodleLogic][get_user_info]url:#{url}"
+      MoodleApiLogic.debug_log "[MoodleApiLogic][get_user_info]url:#{url}"
 
       response = HTTParty.post(url,
                               headers: { 'Accept' => 'application/json'}
       )
 
       if response.try(:code) != 200
-        MoodleLogic.debug_log "[MoodleLogic][get_user_info] error:#{response.try(:code)}"
+        MoodleApiLogic.debug_log "[MoodleApiLogic][get_user_info] error:#{response.try(:code)}"
         return nil
       end
 
-      MoodleLogic.debug_log "[MoodleLogic][get_user_info]response:#{response}"
+      MoodleApiLogic.debug_log "[MoodleApiLogic][get_user_info]response:#{response}"
       JSON.parse(response.body)
     end
 
     ##
     # moodle apiを通して、ユーザが登録している課題一覧を取得する
     def get_assign_submission_files(lms_user)
-      MoodleLogic.debug_log "[MoodleLogic][get_assign_submission_files]lms_user:#{lms_user.id}"
+      MoodleApiLogic.debug_log "[MoodleApiLogic][get_assign_submission_files]lms_user:#{lms_user.id}"
       result = []
 
       # ユーザが履修しているコースを取得する
       enrolled_courses = get_users_courses(lms_user)
 
-      enrolled_courses.each do |enrolled_course|
+      Array(enrolled_courses).each do |enrolled_course|
         # コース内の課題モジュール一覧を取得する
         assign_modules = get_assign_contents(lms_user, enrolled_course["id"])
-        assign_modules.each do |assign_module|
+        Array(assign_modules).each do |assign_module|
           submission_files = get_submission_files(lms_user, assign_module["instance"])
           unless submission_files.empty?
             result << {
@@ -148,7 +148,7 @@ module Logic
           end
         end
       end
-      MoodleLogic.debug_log "[MoodleLogic][get_assign_submission_files]response:#{result}"
+      MoodleApiLogic.debug_log "[MoodleApiLogic][get_assign_submission_files]response:#{result}"
       result
     end
 
@@ -162,17 +162,17 @@ module Logic
       function = "core_enrol_get_users_courses"
       url = "#{lms_user.lms}/webservice/rest/server.php?wstoken=#{self.wstoken}&wsfunction=#{function}&moodlewsrestformat=json&userid=#{lms_user.lms_user_id}"
 
-      MoodleLogic.debug_log "[MoodleLogic][get_submission]core_enrol_get_users_courses url:#{url}"
+      MoodleApiLogic.debug_log "[MoodleApiLogic][get_submission]core_enrol_get_users_courses url:#{url}"
 
       response = HTTParty.post(url,
                                headers: { 'Accept' => 'application/json'}
       )
 
       if response.try(:code) != 200
-        MoodleLogic.debug_log "[MoodleLogic][get_submission]core_enrol_get_users_courses error:#{response.try(:code)}"
+        MoodleApiLogic.debug_log "[MoodleApiLogic][get_submission]core_enrol_get_users_courses error:#{response.try(:code)}"
         return nil
       end
-      MoodleLogic.debug_log "[MoodleLogic][get_user_info]response:#{response}"
+      MoodleApiLogic.debug_log "[MoodleApiLogic][get_user_info]response:#{response}"
       JSON.parse(response.body)
     end
 
@@ -183,19 +183,19 @@ module Logic
       function = "core_course_get_contents"
       url = "#{lms_user.lms}/webservice/rest/server.php?wstoken=#{self.wstoken}&wsfunction=#{function}&moodlewsrestformat=json&courseid=#{course_id}"
 
-      MoodleLogic.debug_log "[MoodleLogic][get_contents]url:#{url}"
+      MoodleApiLogic.debug_log "[MoodleApiLogic][get_contents]url:#{url}"
 
       response = HTTParty.post(url,
                                headers: { 'Accept' => 'application/json'}
       )
 
       if response.try(:code) != 200
-        MoodleLogic.debug_log "[MoodleLogic][get_assign_contents] error:#{response.try(:code)}"
+        MoodleApiLogic.debug_log "[MoodleApiLogic][get_assign_contents] error:#{response.try(:code)}"
         return nil
       end
 
       result = []
-      MoodleLogic.debug_log "[MoodleLogic][get_assign_contents]response:#{response}"
+      MoodleApiLogic.debug_log "[MoodleApiLogic][get_assign_contents]response:#{response}"
       contents = JSON.parse(response.body)
       contents.each do |contents|
         contents["modules"].each do |mod|
@@ -214,17 +214,17 @@ module Logic
       function = "mod_assign_get_submissions"
       url = "#{lms_user.lms}/webservice/rest/server.php?wstoken=#{self.wstoken}&wsfunction=#{function}&moodlewsrestformat=json&assignmentids[0]=#{assignment_id}"
 
-      MoodleLogic.debug_log "[MoodleLogic][get_submissions]url:#{url}"
+      MoodleApiLogic.debug_log "[MoodleApiLogic][get_submissions]url:#{url}"
 
       response = HTTParty.post(url,
                                headers: { 'Accept' => 'application/json'}
       )
 
       if response.try(:code) != 200
-        MoodleLogic.debug_log "[MoodleLogic][get_submissions] error:#{response.try(:code)}"
+        MoodleApiLogic.debug_log "[MoodleApiLogic][get_submissions] error:#{response.try(:code)}"
         return nil
       end
-      MoodleLogic.debug_log "[MoodleLogic][get_submissions]response:#{response}"
+      MoodleApiLogic.debug_log "[MoodleApiLogic][get_submissions]response:#{response}"
       JSON.parse(response.body)
     end
 
@@ -232,20 +232,23 @@ module Logic
     # 課題モジュールの内で、ファイルの提出物を取得する
     def get_submission_files(lms_user, assignment_id)
 
-      MoodleLogic.debug_log "[MoodleLogic][get_submission_files]assignment_id:#{assignment_id}"
+      MoodleApiLogic.debug_log "[MoodleApiLogic][get_submission_files]assignment_id:#{assignment_id}"
 
       result = []
-      submissions = get_submissions(lms_user, assignment_id)
-      submissions.each do |submission|
-        submission[1].each do |assignment|
-          assignment["submissions"].each do |submission|
-            if submission["status"] == "submitted"
-              submission["plugins"].each do |plugin|
-                if plugin["type"] == "file"
-                  plugin["fileareas"].each do |filearea|
-                    filearea["files"].each do |file|
-                      result << {filename: file["filename"], fileurl: file["fileurl"], timemodified: Time.at(submission["timemodified"].to_i)}
-                    end
+      # 本人を特定できない場合は返さない
+      return result if lms_user.lms_user_id.blank?
+
+      submissions = get_submissions(lms_user, assignment_id) || {}
+      Array(submissions["assignments"]).each do |assignment|
+        Array(assignment["submissions"]).each do |submission|
+          # API は課題の提出物を全員分返すため、本人の提出物だけに絞る
+          next unless submission["userid"].to_s == lms_user.lms_user_id.to_s
+          if submission["status"] == "submitted"
+            Array(submission["plugins"]).each do |plugin|
+              if plugin["type"] == "file"
+                Array(plugin["fileareas"]).each do |filearea|
+                  Array(filearea["files"]).each do |file|
+                    result << {filename: file["filename"], fileurl: file["fileurl"], timemodified: Time.at(submission["timemodified"].to_i)}
                   end
                 end
               end
@@ -253,7 +256,7 @@ module Logic
           end
         end
       end
-      MoodleLogic.debug_log "[MoodleLogic][get_user_info]response:#{result}"
+      MoodleApiLogic.debug_log "[MoodleApiLogic][get_user_info]response:#{result}"
       result
     end
   end

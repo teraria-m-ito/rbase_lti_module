@@ -40,10 +40,14 @@ class LTIOrg < ApplicationRecord
   #所属学部の取得
   def parent_institution
     depends_org = self
+    visited_ids = []
     while depends_org.present?
       if depends_org.org_div_key == :institution or depends_org.org_div_key == :root
         break
       end
+      # 親子関係が循環している場合は見つからない扱いにする
+      return nil if visited_ids.include?(depends_org.id)
+      visited_ids << depends_org.id
       #親を取得
       depends_org = ::LTIOrg.where(id: depends_org.parent_org_id).first || nil
     end
@@ -53,10 +57,14 @@ class LTIOrg < ApplicationRecord
   #所属学科の取得
   def parent_department
     depends_org = self
+    visited_ids = []
     while depends_org.present?
       if depends_org.org_div_key == :department or depends_org.org_div_key == :root
         break
       end
+      # 親子関係が循環している場合は見つからない扱いにする
+      return nil if visited_ids.include?(depends_org.id)
+      visited_ids << depends_org.id
       #親を取得
       depends_org = ::LTIOrg.where(id: depends_org.parent_org_id).first || nil
     end
@@ -69,7 +77,7 @@ class LTIOrg < ApplicationRecord
     result = nil
     depts = ::LTIOrg.where(org_name: department_name).where(org_div: ::LTIOrg.org_div_id_by_key(:department)).all
     depts.each do |dept|
-      if dept.parent_institution.org_name == institution_name
+      if dept.parent_institution&.org_name == institution_name
         result = dept 
         break
       end
@@ -90,7 +98,10 @@ class LTIOrg < ApplicationRecord
   def self_parent_ids
     result = []
     target = self
-    while target.parent_org_id != nil
+    while target && target.parent_org_id != nil
+      if target.parent_org_id == self.id || result.include?(target.parent_org_id)
+        raise "組織の親子関係が循環しています（組織コード:#{self.org_cd}）"
+      end
       result << target.parent_org_id
       target = target.parent_org
     end

@@ -3,14 +3,22 @@ require 'jwt'
 
 module LTI
   class LTIServiceConnector
-    NEXT_PAGE_REGEX = "/^Link:.*<([^>]*)>; ?rel=\"next\"/i"
-    
+    # Link ヘッダの値（例: <https://...?page=2>; rel="next", <...>; rel="last"）から次ページの URL を取り出す
+    NEXT_PAGE_REGEX = /<([^>]*)>\s*;\s*rel="?next"?/i
+    OPEN_TIMEOUT = 5
+    READ_TIMEOUT = 30
+
     @registration = nil
     @access_tokens = nil;
 
     def initialize(registration)
       @registration = registration
       @access_tokens = {}
+    end
+
+    def self.next_page_url(headers)
+      link = headers.to_h.find { |name, _| name.to_s.casecmp("link").zero? }&.last
+      NEXT_PAGE_REGEX.match(link.to_s)&.[](1)
     end
 
     def get_access_token(scopes)
@@ -57,16 +65,24 @@ module LTI
       req.body = auth_request.to_query
 
       req_options = {
-        use_ssl: uri.scheme == "https"
+        use_ssl: uri.scheme == "https",
+        open_timeout: OPEN_TIMEOUT,
+        read_timeout: READ_TIMEOUT
       }
 
       token_data = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
         http.request(req)
       end
-      
-      @access_tokens[scope_key] = JSON.parse(token_data.body)['access_token']
-      
-      @access_tokens[scope_key]
+
+      unless token_data.is_a?(Net::HTTPSuccess)
+        raise ::LTI::Exception.new("Failed to get access token: #{token_data.code} #{token_data.body.to_s[0, 300]}")
+      end
+      access_token = (JSON.parse(token_data.body.to_s) rescue {})['access_token']
+      if access_token.blank?
+        raise ::LTI::Exception.new("Access token not found in response: #{token_data.body.to_s[0, 300]}")
+      end
+
+      @access_tokens[scope_key] = access_token
     end
 
     def make_service_request(scopes, method, url, body = nil, content_type = 'application/json', accept = 'application/json')
@@ -86,7 +102,9 @@ module LTI
       req["Content-Type"] = content_type
 
       req_options = {
-        use_ssl: uri.scheme == "https" 
+        use_ssl: uri.scheme == "https",
+        open_timeout: OPEN_TIMEOUT,
+        read_timeout: READ_TIMEOUT
       }
       ::Rails.logger.info("----------request url:#{url}")
       ::Rails.logger.info("----------request body:#{req.body}")
@@ -101,12 +119,16 @@ module LTI
       end
 
       ::Rails.logger.info("----------status:#{response.code}")
-      response_body = response.body.size > 0 ? JSON.parse(response.body) : nil
-
       ::Rails.logger.info("----------response body:#{response.body}")
 
+      # 204 等で本文が空の場合や、エラー時に JSON 以外が返る場合がある
+      response_body = response.body.present? ? (JSON.parse(response.body) rescue nil) : nil
+
       #レスポンスコードが200以外の場合は、エラーにする
-      raise ::LTI::Exception.new("Response code is #{response.code}(expected 200 or 201 or 204) / #{response_body["reason"]}") unless ["200", "201", "204"].include?(response.code) #and response_body.blank?
+      unless ["200", "201", "204"].include?(response.code)
+        reason = response_body.is_a?(Hash) ? response_body["reason"] : response.body.to_s[0, 300]
+        raise ::LTI::Exception.new("Response code is #{response.code}(expected 200 or 201 or 204) / #{reason}")
+      end
 
       return {
         headers: resp_headers,

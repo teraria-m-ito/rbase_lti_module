@@ -16,6 +16,10 @@ module LTI
         ::Rails.logger.info("[LmsUserImportJob]error")
       end
       ::Rails.logger.info("[LmsUserImportJob]finished.....")
+    rescue => e
+      # 再試行で同じ失敗を繰り返して「処理中」のまま残らないよう、エラーとして記録して終了する
+      ::Rails.logger.error("[LmsUserImportJob]#{e.class}: #{e.message}\n#{e.backtrace&.first(10)&.join("\n")}")
+      ::LmsUserImportError.create!(lms_user_import_id: args[0], line_no: 0, error_message: "#{e.class}: #{e.message}".truncate(255)) if ::LmsUserImport.exists?(args[0])
     end
   end
 end

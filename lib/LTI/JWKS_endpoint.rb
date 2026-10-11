@@ -12,13 +12,6 @@ module LTI
       ::LTI::JWKSEndpoint.new(keys)
     end
     
-    def self.from_issuer(database, issuer)
-      registration = database.find_registration_by_issuer(issuer)
-      raise ::LTI::Exception.new("Registration not found.") unless registration
-
-      return ::LTI::JWKSEndpoint.new({registration.get_kid => get_tool_private_key})
-    end
-
     def self.from_registration(registration)
       return ::LTI::JWKSEndpoint.new({registration.get_kid => registration.get_tool_private_key})
     end

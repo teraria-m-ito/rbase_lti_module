@@ -135,7 +135,8 @@ module Lti
             return _render_403
           end
 
-          lms_user.site_ids = site_ids
+          # 他サイトの所属を消さないよう、起動した LTI データベースのサイトを追加する
+          lms_user.site_ids = (Array(lms_user.site_ids) + Array(site_ids)).uniq
           unless lms_user.valid?
             ::Rails.logger.error("lms_user error!:#{lms_user.errors.full_messages}")
             return _render_500
@@ -146,8 +147,8 @@ module Lti
           logic = nil
           role_updated_by_canvas = false
           # 対象がMOODLEの場合、ユーザ情報を取得する
-          if ::Logic::MoodleLogic.get_lms_type(lms_user.lms) == "MOODLE"
-            logic = ::Logic::MoodleLogic.new
+          if ::Logic::MoodleApiLogic.get_lms_type(lms_user.lms) == "MOODLE"
+            logic = ::Logic::MoodleApiLogic.new
             user_info = logic.get_user_info(lms_user).try(:first)
             if user_info.is_a?(Array) and user_info[0] == "exception"
               return _render_500
@@ -165,13 +166,13 @@ module Lti
             #カスタムフィールの設定
             customfields = user_info["customfields"] || []
             customfields.each do |customfield|
-              if lti_field_name = ::Logic::MoodleLogic.get_lms_field_type(customfield["shortname"])
+              if lti_field_name = ::Logic::MoodleApiLogic.get_lms_field_type(customfield["shortname"])
                 lms_user.send("#{lti_field_name}=", customfield["value"])
               end
             end
             lms_user.save!
           else
-            canvas_lms_type = ::Logic::CanvasLogic.get_lms_type(lms_user.lms, site_id)
+            canvas_lms_type = ::Logic::CanvasApiLogic.get_lms_type(lms_user.lms, site_id)
             if canvas_lms_type.blank?
               token = ::SystemSetting.get_setting(:canvas_api_token, site_id).to_s
               base = ::SystemSetting.get_setting(:canvas_api_base_url, site_id).to_s
@@ -179,12 +180,12 @@ module Lti
               canvas_lms_type = "CANVAS" if token.present? && base.present? && family == "canvas"
             end
             only_user = ::LmsUser.lti_roles_only_user?(@launch.get_launch_data['https://purl.imsglobal.org/spec/lti/claim/roles'])
-            Rails.logger.info("[CanvasLogic] lms_type=#{canvas_lms_type.inspect} site_id=#{site_id} only_user=#{only_user} role=#{lms_user.role}")
+            Rails.logger.info("[CanvasApiLogic] lms_type=#{canvas_lms_type.inspect} site_id=#{site_id} only_user=#{only_user} role=#{lms_user.role}")
             # USER は AdminUser ロールが MEMBER。LTI が #User のみのとき履修から STUDENT / TEACHER に補正する
             if canvas_lms_type == "CANVAS" && only_user && lms_user.role == "USER"
-              logic = ::Logic::CanvasLogic.new
+              logic = ::Logic::CanvasApiLogic.new
               user_info = logic.get_user_info(lms_user, site_id)
-              Rails.logger.info("[CanvasLogic] user_info id=#{user_info.try(:[], 'id').inspect}")
+              Rails.logger.info("[CanvasApiLogic] user_info id=#{user_info.try(:[], 'id').inspect}")
               if user_info.present?
                 lms_user.lms_user_id = user_info["id"] if user_info["id"].present?
                 unless session[:lti_custom_params] && session[:lti_custom_params]["forced_role"]
@@ -192,14 +193,14 @@ module Lti
                 end
                 role_updated_by_canvas = %w[STUDENT TEACHER].include?(lms_user.role)
                 lms_user.save! if lms_user.changed?
-                Rails.logger.info("[CanvasLogic] after enrollments role=#{lms_user.role} updated=#{role_updated_by_canvas}")
+                Rails.logger.info("[CanvasApiLogic] after enrollments role=#{lms_user.role} updated=#{role_updated_by_canvas}")
               end
             end
           end
 
           unless lms_user.lms_user_id
             if lms_user.get_lms_type == "MOODLE"
-              user_info = ::Logic::MoodleLogic.get_user_info(lms_user).try(:first) unless user_info
+              user_info = ::Logic::MoodleApiLogic.new.get_user_info(lms_user).try(:first) unless user_info
               user_id = user_info["id"]
               lms_user.lms_user_id = user_id
               lms_user.save!
@@ -257,20 +258,6 @@ module Lti
             session[:launch_data][:resource][:title] = resource_context["title"]
           end
 
-          #キャッシュ削除を廃止
-          # cache.remove_cache(nonce)
-
-          #LTIサービス履歴を登録
-          cache = @launch.instance_variable_get(:@cache)
-          nonce = cache.get_cache.to_h["nonce"].keys.first
-          lti_cache = ::LTICache.where(nonce: nonce).first
-
-          user_id = @launch.get_basic_outcome["userid"].to_i
-          course_id = @launch.get_context["id"].to_i
-          course_name = @launch.get_context["title"]
-          resource_id = @launch.get_resource["id"].to_i
-          resource_name = @launch.get_resource["title"]
-
           session[:canvas_admin_embedded_ui] = true
           redir = post_launch_redirect_path(lms_user, site_id)
           if redir.blank?
@@ -284,6 +271,7 @@ module Lti
       rescue => e
         Rails.logger.error e.full_message
         Rails.logger.error e.backtrace.join("\n")
+        _render_500
       end
     end
 
@@ -370,7 +358,7 @@ module Lti
       grades = launch.get_ags
     
       score = ::LTI::LTIGrade.new
-        .set_score_given(params['score'].to_i)
+        .set_score_given(params['score'].presence&.to_f)
         .set_score_maximum(100)
         .set_timestamp(DateTime.now.iso8601)
         .set_activity_progress('Completed')
@@ -386,7 +374,7 @@ module Lti
       grades.put_grade(score, score_lineitem)
 
       time = ::LTI::LTIGrade.new
-        .set_score_given(params['time'].to_i)
+        .set_score_given(params['time'].presence&.to_f)
         .set_score_maximum(999)
         .set_timestamp(DateTime.now.iso8601)
         .set_activity_progress('Completed')

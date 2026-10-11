@@ -23,17 +23,8 @@ module LTI
           'application/vnd.ims.lti-nrps.v2.membershipcontainer+json'
         )
         
-        members = members.concat(page[:body]['members'])
-        next_page = false
-        
-        page[:headers].each do |name, header|
-          re = Regexp.new(::LTI::LTIServiceConnector::NEXT_PAGE_REGEX)
-          m = re.match(header)
-          if m
-            next_page = m[1]
-            break
-          end
-        end
+        members = members.concat(Array(page[:body].try(:[], 'members')))
+        next_page = ::LTI::LTIServiceConnector.next_page_url(page[:headers])
       end
       
       members

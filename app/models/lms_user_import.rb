@@ -92,23 +92,32 @@ class LmsUserImport < ApplicationRecord
     xlsx = Roo::Excelx.new(filepath)
     xlsx.default_sheet = xlsx.sheets[0]
     available_site_ids = current_admin_user&.site_ids || []
+    # Excel の数値セル（例: 12345）は Float で読まれるため、整数値は "12345.0" にならないよう整数の文字列にする
+    to_cell = lambda do |value|
+      return nil if value.nil?
+      if value.is_a?(Numeric) && value == value.to_i
+        value.to_i.to_s
+      else
+        value.to_s.strip
+      end
+    end
     2.upto(xlsx.last_row) do |r_num|
       row = xlsx.row(r_num)
       lms_user_import_row = ::LmsUserImportRow.new
-      lms_user_import_row.edit_div = row[0]                 #編集区分
-      lms_user_import_row.site_name = row[1].to_s            #サイト名
+      lms_user_import_row.edit_div = to_cell.call(row[0])                 #編集区分
+      lms_user_import_row.site_name = to_cell.call(row[1]).to_s            #サイト名
       lms_user_import_row.available_site_ids = available_site_ids
-      lms_user_import_row.username = row[2].to_s            #ユーザID
-      lms_user_import_row.name = row[3]                     #ユーザ名
-      lms_user_import_row.given_name = row[4]               #名
-      lms_user_import_row.family_name = row[5]              #姓
-      lms_user_import_row.email = row[6]                    #メールアドレス
-      lms_user_import_row.lms = row[7]                      #登録元LMS
+      lms_user_import_row.username = to_cell.call(row[2]).to_s            #ユーザID
+      lms_user_import_row.name = to_cell.call(row[3])                     #ユーザ名
+      lms_user_import_row.given_name = to_cell.call(row[4])               #名
+      lms_user_import_row.family_name = to_cell.call(row[5])              #姓
+      lms_user_import_row.email = to_cell.call(row[6])                    #メールアドレス
+      lms_user_import_row.lms = to_cell.call(row[7])                      #登録元LMS
 
-      lms_user_import_row.role = row[8]                     #権限
+      lms_user_import_row.role = to_cell.call(row[8])                     #権限
 
-      lms_user_import_row.institution = row[9]              #学部
-      lms_user_import_row.department = row[10]               #学科
+      lms_user_import_row.institution = to_cell.call(row[9])              #学部
+      lms_user_import_row.department = to_cell.call(row[10])               #学科
 
       #組織IDの設定
       if lms_user_import_row.institution.present? and lms_user_import_row.department.present?
@@ -121,7 +130,7 @@ class LmsUserImport < ApplicationRecord
       custom_fields = ::CustomField.where(custom_field_type: ::CustomField.custom_field_type_id_by_key(:lms_user)).order(:display_order)
       custom_fields.each_with_index do |custom_field, i|
         cell = row[11 + i]
-        lms_user_import_row.send("#{custom_field.field_name}=", cell.nil? ? nil : cell.to_s)
+        lms_user_import_row.send("#{custom_field.field_name}=", to_cell.call(cell))
       end
 
       ::Rails.logger.info("[LMSユーザインポート]load #{lms_user_import_row.edit_div} / #{lms_user_import_row.username}")

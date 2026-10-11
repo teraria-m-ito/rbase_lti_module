@@ -19,6 +19,8 @@ class LTIDatabase < ApplicationRecord
   validates :key_set_url, presence: true
   validates :private_key_file, presence: true
   validates :kid, presence: true
+  validates :registration_lms_url, presence: true
+  validates :registration_lms_url, format: { with: %r{\Ahttps?://[^/\s]+}, allow_blank: true }
   
   def initialize(attr)
     super(attr)
@@ -134,7 +136,8 @@ class LTIDatabase < ApplicationRecord
     return if ids.include?(deployment_id.to_s)
 
     ids << deployment_id.to_s
-    record.update!(deployment_json: JSON.generate(ids))
+    # 呼び出し元LMS 未設定の既存データでも LTI 起動を止めないよう、検証を通さずに更新する
+    record.update_columns(deployment_json: JSON.generate(ids), updated_at: Time.current)
   end
 
   #noinspection RubyArgCount

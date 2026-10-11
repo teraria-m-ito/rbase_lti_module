@@ -163,6 +163,7 @@ ja:
       lti_database:
         site_ids: "サイト"
         name: "データベース名"
+        registration_lms_url: "呼び出し元LMS"
         iss: "iss"
         client_id: "クライアントID"
         auth_login_url: "認証ログインURL"

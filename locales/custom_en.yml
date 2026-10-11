@@ -148,6 +148,7 @@ en:
       lti_database:
         site_ids: "Sites"
         name: "Database name"
+        registration_lms_url: "Calling LMS"
         iss: "iss"
         client_id: "Client ID"
         auth_login_url: "Auth login URL"

@@ -42,6 +42,17 @@ module Api
           return render status: :bad_request, plain: 'missing openid_configuration or registration_token'
         end
 
+        # 認証なしで呼べる API のため、事前登録した呼び出し元LMS以外からの登録で LTI 設定を上書きさせない
+        registered_origin = url_origin(lti_database.registration_lms_url)
+        unless registered_origin
+          Rails.logger.warn("[LTI DynReg] registration_lms_url not registered: database_name=#{@database_name}")
+          return render status: :forbidden, plain: 'calling LMS is not registered'
+        end
+        unless url_origin(@openid_configuration_url) == registered_origin
+          Rails.logger.warn("[LTI DynReg] untrusted openid_configuration: #{@openid_configuration_url} (registered: #{registered_origin})")
+          return render status: :forbidden, plain: 'untrusted openid_configuration'
+        end
+
         oidc = fetch_json(@openid_configuration_url)
         unless oidc
           return render status: :bad_gateway, plain: 'failed to fetch openid_configuration'
@@ -60,6 +71,10 @@ module Api
         registration_endpoint = oidc['registration_endpoint']
         unless registration_endpoint
           return render status: :bad_request, plain: 'registration_endpoint not found in openid_configuration'
+        end
+        unless url_origin(registration_endpoint) == registered_origin
+          Rails.logger.warn("[LTI DynReg] untrusted registration_endpoint: #{registration_endpoint} (registered: #{registered_origin})")
+          return render status: :forbidden, plain: 'untrusted registration_endpoint'
         end
 
         payload = build_client_registration_payload
@@ -98,6 +113,15 @@ module Api
       end
 
       private
+
+      def url_origin(url)
+        uri = URI.parse(url.to_s.strip)
+        return nil unless uri.is_a?(URI::HTTP) && uri.host.present?
+
+        "#{uri.scheme}://#{uri.host.downcase}:#{uri.port}"
+      rescue URI::InvalidURIError
+        nil
+      end
 
       # app_part_url は LTI エンドポイント用パス（例: ldi/dashboard）。
       # クエリ文字列が付いている場合は custom_parameters へ取り込む。

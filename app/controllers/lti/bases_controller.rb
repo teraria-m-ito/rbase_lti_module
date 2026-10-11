@@ -500,6 +500,7 @@ module Lti
     end
 
     def set_login
+      lms_user_id = nil
       if params[:state]
         cookie = ::LTI::CookieStore.new
         cookie.set_state(params[:state])
@@ -507,13 +508,14 @@ module Lti
         if salt
           encrypted_text = cookie.get_cookie("token_auth")
           lms_user_id = cookie.aes_decrypt(encrypted_text, salt, 128)
-          params[:current_lms_user] = lms_user_id
           cookie.clear_cookie(params[:state])
         end
       end
+      # URL の current_lms_user だけで認証なしにログインできるため、検証用に DEBUG_MODE=true のときのみ許可する
+      lms_user_id ||= params[:current_lms_user].presence if ENV["DEBUG_MODE"] == "true"
 
-      if params[:current_lms_user]
-        lms_user = ::LmsUser.find(params[:current_lms_user])
+      if lms_user_id.present?
+        lms_user = ::LmsUser.find(lms_user_id)
         session[:current_lms_user] = lms_user
         current_admin_user = lms_user.create_admin_user
         sign_in(current_admin_user)

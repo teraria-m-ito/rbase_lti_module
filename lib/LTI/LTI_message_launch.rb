@@ -82,7 +82,7 @@ module LTI
     end
 
     def has_nrps
-      !@jwt['body']['https://purl.imsglobal.org/spec/lti-nrps/claim/namesroleservice']['context_memberships_url'].nil?
+      !@jwt['body'].dig('https://purl.imsglobal.org/spec/lti-nrps/claim/namesroleservice', 'context_memberships_url').nil?
     end
 
     def get_nrps
@@ -95,17 +95,16 @@ module LTI
     end
     
     def has_gs
-      !@jwt['body']['https://purl.imsglobal.org/spec/lti-gs/claim/groupsservice']['context_groups_url'].nil?
+      !@jwt['body'].dig('https://purl.imsglobal.org/spec/lti-gs/claim/groupsservice', 'context_groups_url').nil?
     end
 
     def get_gs
-      serice = ::LTI::LTICourseGroupsService.new(
+      service = ::LTI::LTICourseGroupsService.new(
         ::LTI::LTIServiceConnector.new(@registration),
         @jwt['body']['https://purl.imsglobal.org/spec/lti-gs/claim/groupsservice']
-      
       )
       
-      serice
+      service
     end
     
     def has_ags

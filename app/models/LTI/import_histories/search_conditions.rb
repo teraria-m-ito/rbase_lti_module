@@ -57,6 +57,8 @@ module LTI
             when :imported_at then
               field_name = "created_at"
             end
+            # 想定外の項目名は並べ替えに使わない（SQL エラーで 500 になり、その状態がセッションに残るため）
+            next if field_name.nil?
 
             if v[:direction] == :desc
               import_histories = import_histories.order("#{field_name} desc")

@@ -115,6 +115,8 @@ module LTI
             when :screen_name then
               field_name = "screen_name"
             end
+            # 想定外の項目名は並べ替えに使わない（SQL エラーで 500 になり、その状態がセッションに残るため）
+            next if field_name.nil?
             if v[:direction] == :desc
               operation_logs = operation_logs.order("#{field_name} desc")
             elsif v[:direction] == :asc

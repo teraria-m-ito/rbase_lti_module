@@ -87,7 +87,7 @@ module LTI
     
     def get_kid
       if @kid.nil?
-        return Digest::SHA256.digest("#{@issuer}#{@client_id}".strip)
+        return Digest::SHA256.hexdigest("#{@issuer}#{@client_id}".strip)
       end
       
       @kid

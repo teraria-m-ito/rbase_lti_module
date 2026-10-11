@@ -51,7 +51,8 @@ module LTI
               orgs = orgs.joins(join_sql)
               field_name = "parent.org_name"
             else
-              field_name = k
+              # 想定外の項目名は並べ替えに使わない（SQL エラーで 500 になり、その状態がセッションに残るため）
+              next
             end
 
             if v[:direction] == :desc

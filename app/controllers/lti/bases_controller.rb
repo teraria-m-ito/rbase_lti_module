@@ -8,7 +8,8 @@ module Lti
     skip_forgery_protection only: [:login, :launch]
     before_action :set_login
     before_action :set_restrict_display
-    before_action :redirect_root, except: [:login, :launch]
+    # jwks は LMS が未ログインで公開鍵を取得するため、サインインへ誘導しない
+    before_action :redirect_root, except: [:login, :launch, :jwks]
     before_action :set_page_number
     before_action :set_referrer
     before_action :set_admin_user
@@ -282,6 +283,7 @@ module Lti
       end
 
       lti_database = ::LTIDatabase.where(name: name).first
+      return head :not_found unless lti_database
     
       @endpoint = ::LTI::JWKSEndpoint.new({
         lti_database.kid => lti_database.private_key_file

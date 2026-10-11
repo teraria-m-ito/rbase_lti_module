@@ -209,14 +209,14 @@ class LmsUser < ApplicationRecord
     admin_user
   end
 
+  # 紐づくAdminUserも削除し、パスワードでのログインを不可にする
   def destroy_lms_user
-    if self.admin_user
-      if self.admin_user.destroy
-        self.destroy
-      else
-        false
-      end
-    end
+    transaction do
+      raise ActiveRecord::Rollback if self.admin_user && !self.admin_user.destroy
+      raise ActiveRecord::Rollback unless self.destroy
+
+      true
+    end || false
   end
 
   def is_student?

@@ -136,7 +136,7 @@ class LmsUsersController < CustomUserApplicationController
   end
 
   def destroy
-    flash[:notice] = t("views.common.destroy_complete_message") if @lms_user.destroy
+    flash[:notice] = t("views.common.destroy_complete_message") if @lms_user.destroy_lms_user
     redirect_to lms_users_path, status: :see_other
   end
 

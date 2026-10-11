@@ -45,11 +45,11 @@ module RbaseLtiModule
         current_site_id = conditions.delete(:current_site_id)
         user = self
         if current_site_id
-          user.joins(:admin_user_sites).where("admin_user_sites.site_id = ?", current_site_id)
+          user = user.joins(:admin_user_sites).where("admin_user_sites.site_id = ?", current_site_id)
         end
         name = conditions[:email]
-        user = user.where(conditions).find_by("name = ? OR email = ?", name, name)
-        user.current_site_id = user.site_ids.first if user
+        user = user.where(conditions).find_by("admin_users.name = ? OR admin_users.email = ?", name, name)
+        user.current_site_id = current_site_id || user.site_ids.first if user
         user
       end
     end

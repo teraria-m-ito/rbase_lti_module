@@ -44,9 +44,15 @@ module RbaseLtiModule
         ::Rails.logger.warn("LtiIframeContext: lms_user not found: #{data['lms_user_id']}")
         return
       end
+      # 代理ログイン中は lti_ctx が代理元ユーザのものなので、代理元へ戻さない
+      if session[:proxy_login_original_user_id].present? && lms_user.admin_user_id == session[:proxy_login_original_user_id]
+        return
+      end
       admin_user = lms_user.create_admin_user
       if current_admin_user && current_admin_user.id != admin_user.id
         sign_out(current_admin_user)
+        session.delete(:proxy_login_original_user_id)
+        session.delete(:proxy_login_original_lms_user_id)
       end
       sign_in(admin_user) unless current_admin_user
       session[:current_lms_user] = lms_user

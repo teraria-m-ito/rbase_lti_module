@@ -4,6 +4,7 @@ module LmsUsersHelper
   def lms_user_show_title_actions
     return if proxy_login?
     return if current_lms_user.try(:id) == @lms_user.try(:id)
+    return if @lms_user.try(:privileged?)
     return unless Ability.new(current_admin_user, "lms_users", "proxy_login").is_enable?
 
     button_to t(:"views.lms_users.show.button_proxy_login"),

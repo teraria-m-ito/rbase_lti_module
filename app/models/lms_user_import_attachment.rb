@@ -1,6 +1,6 @@
 class LmsUserImportAttachment < ApplicationRecord
 
-  mount_uploader :document, DocumentUploader
+  mount_uploader :document, LtiImportDocumentUploader
 
   belongs_to :lms_user_import, class_name: '::LmsUserImport', foreign_key: 'lms_user_import_id', optional: true
   

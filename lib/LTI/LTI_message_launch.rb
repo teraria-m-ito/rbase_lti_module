@@ -62,9 +62,10 @@ module LTI
       
       validate_state
       validate_jwt_format
-      validate_nonce
       validate_registration
       validate_jwt_signature
+      # 署名が正しい id_token だけが nonce を使用済みにできるよう、署名検証の後に行う
+      validate_nonce
       validate_deployment
       validate_message
       cache_launch_data
@@ -219,6 +220,19 @@ module LTI
         # Error if state doesn't match
         raise ::LTI::Exception.new("State not found.")
       end
+      # state は一度だけ使える
+      @cookie.clear_cookie(@params['state'])
+
+      # セッション Cookie が届く場合は、login を開始したブラウザと同じかを確認する（ログイン CSRF 対策）。
+      # サードパーティ Cookie がブロックされセッション Cookie が届かない環境では確認できないため通す。
+      request = Thread.current[:request]
+      if request.cookies[request.session_options[:key]].present?
+        states = Array(request.session[:lti_states])
+        unless states.include?(@params['state'])
+          raise ::LTI::Exception.new("State does not match this browser session.")
+        end
+        request.session[:lti_states] = states - [@params['state']]
+      end
     end
     
     def validate_jwt_format
@@ -241,6 +255,12 @@ module LTI
     def validate_nonce
       unless @cache.check_nonce(@jwt['body']['nonce'])
         raise ::LTI::Exception.new("Invalid Nonce.")
+      end
+      # 同じ id_token での再起動を防ぐため nonce は一度だけ使える。
+      # キャッシュ本体は AGS 等が launch_id で参照するため削除せず、使用済みの印だけ付ける（同時に来ても 1 件だけ成功する）
+      used = ::LTICache.where(nonce: @jwt['body']['nonce'], nonce_used_at: nil).update_all(nonce_used_at: Time.current)
+      if used == 0
+        raise ::LTI::Exception.new("Nonce already used.")
       end
     end
     

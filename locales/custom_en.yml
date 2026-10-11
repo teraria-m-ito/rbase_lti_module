@@ -277,6 +277,7 @@ en:
         alert_failed: "Proxy login failed."
         alert_already: "You are already in a proxy login."
         alert_self: "You cannot proxy login as yourself."
+        alert_privileged: "You cannot proxy login as a user with administrator privileges."
 
     lms_user_imports:
       messages:

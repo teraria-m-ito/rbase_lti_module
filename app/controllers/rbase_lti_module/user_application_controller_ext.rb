@@ -24,7 +24,8 @@ module RbaseLtiModule
 
       case @sso_type
       when "saml2" then
-        response = OneLogin::RubySaml::Response.new(params[:SAMLResponse], {skip_conditions: true})
+        # 有効期限（NotBefore / NotOnOrAfter）は検証し、IdP との時刻ずれは 1 時間まで許容する
+        response = OneLogin::RubySaml::Response.new(params[:SAMLResponse], {allowed_clock_drift: 1.hour.to_i})
         response.settings = saml_settings
         iss = nil
         if response.is_valid?

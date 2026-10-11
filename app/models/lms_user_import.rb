@@ -182,6 +182,8 @@ class LmsUserImport < ApplicationRecord
 
     ::LmsUser.transaction do
       available_sites = ::Site.where(id: current_admin_user&.site_ids || [])
+      # EDIT / DEL は操作者の所属サイトに属するユーザのみ対象にする
+      accessible_lms_users = ::LmsUser.joins(:lms_user_sites).where(lms_user_sites: { site_id: available_sites.select(:id) }).distinct
 
       #インポート行の内、フォーム処理行から処理を行う
       @lms_user_import_rows.each_with_index do |lms_user_import_row, index|
@@ -193,7 +195,7 @@ class LmsUserImport < ApplicationRecord
             if lms_user_import_row.edit_div_key == :add
               ::LmsUser.new
             else
-              ::LmsUser.find_by!(username: lms_user_import_row.username)
+              accessible_lms_users.find_by!(username: lms_user_import_row.username)
             end
           LMS_USER_ATTR.each do |attr|
             lms_user.send("#{attr}=", lms_user_import_row.send(attr.to_sym))
@@ -202,7 +204,8 @@ class LmsUserImport < ApplicationRecord
 
           # サイト名からサイトを設定（ADD・EDIT共通）
           sites_by_name = available_sites.where(site_name: lms_user_import_row.site_names).index_by(&:site_name)
-          lms_user.sites = lms_user_import_row.site_names.map { |site_name| sites_by_name.fetch(site_name) }
+          other_sites = lms_user.new_record? ? [] : lms_user.sites.where.not(id: available_sites.select(:id)).to_a
+          lms_user.sites = lms_user_import_row.site_names.map { |site_name| sites_by_name.fetch(site_name) } + other_sites
 
           #学科設定
           lms_user.dept_org_id = lms_user.lti_org_id
@@ -219,7 +222,7 @@ class LmsUserImport < ApplicationRecord
           end
         when :del
           ::Rails.logger.info("[LMSユーザインポート](#{index+1}/#{@lms_user_import_rows.size})DEL:#{lms_user_import_row.username}")
-          lms_user = ::LmsUser.find_by!(username: lms_user_import_row.username)
+          lms_user = accessible_lms_users.find_by!(username: lms_user_import_row.username)
           raise "fail destroy #{lms_user.username}" unless lms_user.destroy_lms_user
         end
       end

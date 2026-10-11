@@ -40,7 +40,8 @@ class LmsUser < ApplicationRecord
   )
 
   validates :site_ids, presence: true
-  validates :username, presence: true, uniqueness: true
+  # 論理削除した行と重複しても作り直せるよう、削除済みは一意性の対象外にする
+  validates :username, presence: true, uniqueness: { conditions: -> { where(deleted_at: nil) } }
   validates :name, presence: true
   validates :email, presence: true
   validates :role, presence: true
@@ -170,7 +171,7 @@ class LmsUser < ApplicationRecord
     admin_user.site_ids =self.site_ids
 
     role_divs = admin_user.site_ids.inject([]){|arry, site_id| arry << ::SystemSetting.get_setting(:default_role_div, site_id)}
-    if role_divs.size != 1
+    if role_divs.uniq.size != 1
       raise "Must one type role_div each sites."
     end
 
@@ -236,5 +237,14 @@ class LmsUser < ApplicationRecord
 
   def get_lms_type
     ::Logic::MoodleLogic.get_lms_type(self.lms)
+  end
+
+  # 管理者（Admin / Manager）権限を持つか。切替可能な所持ロールも含めて判定する
+  def privileged?
+    return true if %w[admin manager].include?(role_entry.try(:[], :role_name).to_s.downcase)
+    return false unless admin_user
+
+    admin_user.admin? || admin_user.manager? ||
+      admin_user.held_roles.where("LOWER(roles.role_short_name) IN (?)", %w[admin manager]).exists?
   end
 end

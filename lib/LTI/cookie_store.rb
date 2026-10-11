@@ -1,48 +1,52 @@
 module LTI
   require 'openssl'
   require 'base64'
+  # OIDC の state ごとの値を保持する。
+  # login と launch が別プロセスで処理されても参照できるようプロセス外（ファイル）に置き、期限切れで自動的に消す。
+  # Rails.cache は開発環境で null_store になり得るため専用のストアを使う。
   class CookieStore
-    @@cookie_state = {}
-    @state = nil
-    
+    EXPIRES_IN = 10.minutes
+
+    def self.store
+      @store ||= ::ActiveSupport::Cache::FileStore.new(::Rails.root.join("tmp", "cache", "lti_state"))
+    end
+
     def set_state(state)
-      @@cookie_state[state] = {} if @@cookie_state[state].nil?
       @state = state
     end
 
     def get_cookie(name)
-      return false if @state.nil?
-      
-      cookie = @@cookie_state[@state]
+      return false if @state.blank?
 
-      unless cookie[name].nil?
-        return cookie[name]
-      end
-      
-      # Look for backup cookie if same site is not supported by the user's browser.
-      unless cookie["LEGACY_#{name}"].nil?
-        return cookie["LEGACY_#{name}"]
-      end
-      
-      false
+      value = read_values[name]
+      value.nil? ? false : value
     end
 
     def set_cookie(name, value)
-      return false if @state.nil?
+      return false if @state.blank?
 
-      cookie = @@cookie_state[@state]
-
-      cookie[name] = value
-      
-      # Set a second fallback cookie in the event that "SameSite" is not supported
-      cookie["LEGACY_#{name}"] = value
+      values = read_values
+      values[name] = value
+      self.class.store.write(cache_key(@state), values, expires_in: EXPIRES_IN)
 
       self
     end
-    
+
     def clear_cookie(state)
-      @@cookie_state.delete(state)
+      self.class.store.delete(cache_key(state))
     end
+
+    private
+
+    def read_values
+      self.class.store.read(cache_key(@state)) || {}
+    end
+
+    def cache_key(state)
+      "lti_state/#{::Digest::SHA256.hexdigest(state.to_s)}"
+    end
+
+    public
     
     PASSWORD="CHANGE_ME"
     def aes_encrypt(plain_text, bit)

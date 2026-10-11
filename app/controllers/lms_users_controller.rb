@@ -3,6 +3,10 @@ class LmsUsersController < CustomUserApplicationController
 
   before_action :set_new_lms_user, only: [:new]
   before_action :set_lms_user, only: [:show, :edit, :update, :destroy]
+  # 管理者以外が、管理者権限を持つユーザのパスワードやロールを書き換えられないようにする
+  before_action only: [:edit, :update, :destroy] do
+    _render_403 if !current_admin_user.admin? && @lms_user.privileged?
+  end
   before_action :setup_values, only: [:index, :show, :new, :create, :edit, :update]
   before_action :set_lms_user_custom_fields, only: [:new, :edit, :show]
   before_action :set_inst_dept
@@ -138,10 +142,14 @@ class LmsUsersController < CustomUserApplicationController
 
   desc :display_name => "lms_users_proxy_login"
   def proxy_login
-    @lms_user = ::LmsUser.find_by(id: params[:id])
+    @lms_user = accessible_lms_users.find_by(id: params[:id])
     unless @lms_user
       flash[:alert] = t(:"views.lms_users.proxy_login.alert_failed")
       return redirect_to lms_users_path
+    end
+    if @lms_user.privileged?
+      flash[:alert] = t(:"views.lms_users.proxy_login.alert_privileged")
+      return redirect_to lms_user_path(@lms_user)
     end
     if session[:proxy_login_original_user_id].present?
       flash[:alert] = t(:"views.lms_users.proxy_login.alert_already")
@@ -258,7 +266,12 @@ class LmsUsersController < CustomUserApplicationController
   end
 
   def set_lms_user
-    @lms_user = LmsUser.find(params[:id])
+    @lms_user = accessible_lms_users.find(params[:id])
+  end
+
+  # 操作者の所属サイトに属する LMS ユーザのみ
+  def accessible_lms_users
+    ::LmsUser.joins(:lms_user_sites).where(lms_user_sites: { site_id: current_admin_user.site_ids }).distinct
   end
 
   def set_inst_dept
@@ -273,7 +286,27 @@ class LmsUsersController < CustomUserApplicationController
   end
 
   def lms_user_params
-    params.require(:lms_user).permit!
+    permitted = params.require(:lms_user).permit(
+      :username, :name, :family_name, :given_name, :email, :role,
+      :password, :password_confirmation, :lms, :inst_org_id, :dept_org_id,
+      site_ids: [],
+      lms_user_custom_fields_attributes: [:id, :custom_field_id, :field_value, { field_value: [] }]
+    )
+
+    # 操作者の所属外サイトは付け外しさせない（既存の所属外サイトはそのまま残す）
+    if permitted.key?(:site_ids)
+      own_site_ids = current_admin_user.site_ids
+      requested_site_ids = Array(permitted[:site_ids]).reject(&:blank?).map(&:to_i) & own_site_ids
+      permitted[:site_ids] = requested_site_ids + (Array(@lms_user.try(:site_ids)) - own_site_ids)
+    end
+
+    # 管理者以外は Admin 権限を付与できない
+    unless current_admin_user.admin?
+      entry = ::LmsUser.role_entries.find { |x| x[:id].to_s == permitted[:role].to_s }
+      permitted.delete(:role) if entry && entry[:role_name].to_s.downcase == "admin"
+    end
+
+    permitted
   end
 
   def set_admin_user_attr(admin_user)

@@ -1,7 +1,7 @@
 class LTIOrgImportAttachment < ApplicationRecord
   self.table_name = "lti_org_import_attachments"
 
-  mount_uploader :document, DocumentUploader
+  mount_uploader :document, LtiImportDocumentUploader
 
   belongs_to :lti_org_import, class_name: '::LTIOrgImport', foreign_key: 'lti_org_import_id', optional: true
 

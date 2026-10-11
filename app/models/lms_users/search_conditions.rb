@@ -7,8 +7,11 @@ module LmsUsers
 
     def search
       lms_users = ::LmsUser.joins(:lms_user_sites)
-      admin_user_sites = self.sites.to_a.empty? ? Site.active.where(id: self.current_admin_user.sites.map(&:id)).all.to_a : self.sites
-      lms_users = lms_users.where("lms_user_sites.site_id in (?)", admin_user_sites)
+      # 指定サイトは操作者の所属サイトに限る（他サイトの ID を送られても検索しない）
+      own_site_ids = Site.active.where(id: Array(self.current_admin_user&.site_ids)).pluck(:id)
+      site_ids = self.sites.to_a.reject(&:blank?).map(&:to_i) & own_site_ids
+      site_ids = own_site_ids if site_ids.empty?
+      lms_users = lms_users.where("lms_user_sites.site_id in (?)", site_ids)
       lms_users = lms_users.where("lms_users.name like ?",  "#{self.name}%") unless self.name.blank?
       lms_users = lms_users.where("lms_users.username like ?",  "#{self.username}%") unless self.username.blank?
       lms_users = lms_users.where("lms_users.email like ?",  "#{self.email}%") unless self.email.blank?

@@ -80,8 +80,9 @@ module Lti
             session.delete(:lti_custom_params)
           end
 
-          #Canvasの場合、usernameは連携されないので、emailをユーザ名とする
-          lms_user = ::LmsUser.where(email: @launch.get_launch_data['email'].to_s.downcase).where(lms: @launch.get_launch_data['iss']).first
+          # LMS 上で一意な sub で特定する。未紐付けのユーザは従来どおりメール・ユーザ名で探す
+          lti_sub = launch_data['sub'].to_s
+          lms_user = ::LmsUser.where(lms: launch_data['iss'], lti_sub: lti_sub).first if lti_sub.present?
 
           if @launch.get_launch_data['https://purl.imsglobal.org/spec/lti/claim/ext']
             username = @launch.get_launch_data['https://purl.imsglobal.org/spec/lti/claim/ext']['user_username'].to_s.downcase.split("@")[0]
@@ -90,11 +91,20 @@ module Lti
           end
 
           unless lms_user
-            lms_user = ::LmsUser.where(username: username).where(lms: @launch.get_launch_data['iss']).first
+            #Canvasの場合、usernameは連携されないので、emailをユーザ名とする
+            lms_user = ::LmsUser.where(email: @launch.get_launch_data['email'].to_s.downcase).where(lms: @launch.get_launch_data['iss']).first
+            lms_user = lms_user || ::LmsUser.where(username: username).where(lms: @launch.get_launch_data['iss']).first
             lms_user = lms_user || ::LmsUser.where(username: username).first
             lms_user = lms_user || ::LmsUser.new
+
+            # 別の sub に紐付いたユーザへ、メール・ユーザ名の一致だけで成りすませないようにする
+            if lti_sub.present? && lms_user.lti_sub.present? && lms_user.lti_sub != lti_sub
+              Rails.logger.error("LTI sub mismatch lms_user_id=#{lms_user.id} iss=#{launch_data['iss']}")
+              return _render_403
+            end
           end
 
+          lms_user.lti_sub = lti_sub if lti_sub.present?
           lms_user.username = username
 
           lms_user.name = @launch.get_launch_data['name']
@@ -211,6 +221,9 @@ module Lti
           if current_admin_user && (current_admin_user.id != admin_user.id || role_updated_by_canvas)
             sign_out(current_admin_user)
           end
+          # LTI で起動し直したら代理ログイン状態を破棄する（別の利用者が「代理終了」で元のユーザに戻れないように）
+          session.delete(:proxy_login_original_user_id)
+          session.delete(:proxy_login_original_lms_user_id)
 
           # Todo SSO処理を入れる場合は、ここに記述
           # ログイン処理を実行

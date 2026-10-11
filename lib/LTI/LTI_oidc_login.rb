@@ -46,6 +46,9 @@ module LTI
       state = "state-#{SecureRandom.alphanumeric(13).downcase}"
       @cookie.set_state(state)
       @cookie.set_cookie("lti1p3_#{state}", state)
+      # launch で同じブラウザから戻ってきたことを確認するため、発行した state をセッションに記録する
+      session = Thread.current[:request].session
+      session[:lti_states] = (Array(session[:lti_states]) + [state]).last(10)
       
       # Generate Nonce.
       nonce = "nonce-#{SecureRandom.alphanumeric(13).downcase}.#{SecureRandom.alphanumeric(9).downcase}"

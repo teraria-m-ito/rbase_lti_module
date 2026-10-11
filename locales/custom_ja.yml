@@ -292,6 +292,7 @@ ja:
         alert_failed: "代理ログインに失敗しました。"
         alert_already: "すでに代理ログイン中です。"
         alert_self: "自分自身には代理ログインできません。"
+        alert_privileged: "管理者権限を持つユーザには代理ログインできません。"
 
     lms_user_imports:
       messages:

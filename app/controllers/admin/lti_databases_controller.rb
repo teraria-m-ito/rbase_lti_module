@@ -113,8 +113,9 @@ module Admin
       @sites = current_admin_user.sites.all
     end
     
+    # 操作者の所属サイトに紐付く LTI データベースのみ
     def set_lti_database
-      @lti_database = LTIDatabase.find(params[:id])
+      @lti_database = LTIDatabase.joins(:lti_database_sites).where(lti_database_sites: { site_id: current_admin_user.site_ids }).distinct.find(params[:id])
     end
 
     def search_condition_params
@@ -123,7 +124,20 @@ module Admin
     end
     
     def lti_database_params
-      params.require(:lti_database).permit!
+      permitted = params.require(:lti_database).permit(
+        :name, :registration_lms_url, :iss, :client_id, :auth_login_url, :auth_token_url,
+        :key_set_url, :private_key_file, :public_key, :kid, :deployment_json,
+        site_ids: []
+      )
+
+      # 操作者の所属外サイトは付け外しさせない（既存の所属外サイトはそのまま残す）
+      if permitted.key?(:site_ids)
+        own_site_ids = current_admin_user.site_ids
+        requested_site_ids = Array(permitted[:site_ids]).reject(&:blank?).map(&:to_i) & own_site_ids
+        permitted[:site_ids] = requested_site_ids + (Array(@lti_database.try(:site_ids)) - own_site_ids)
+      end
+
+      permitted
     end
     
   end

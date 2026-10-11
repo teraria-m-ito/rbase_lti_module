@@ -16,7 +16,7 @@ module LTI
         payload["site_id"] = site_id if site_id.present?
         token = message_verifier.generate(
           payload,
-          expires_in: 1.week
+          expires_in: 1.hour
         )
         s = url.to_s
         separator = s.include?("?") ? "&" : "?"

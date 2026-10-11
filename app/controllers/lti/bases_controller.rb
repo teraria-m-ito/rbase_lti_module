@@ -13,6 +13,7 @@ module Lti
     before_action :set_page_number
     before_action :set_referrer
     before_action :set_admin_user
+    after_action :remember_lti_launch_url
 
     layout "application_lti"
 
@@ -461,6 +462,8 @@ module Lti
       return false if path.include?("/login") || path.include?("/launch") || path.include?("/jwks")
       return false if path.start_with?("/canvas/homes") || path.start_with?("/lti_top")
       return false if path.start_with?(new_admin_user_session_path)
+      # 旧処理で記録済みのダウンロード URL に戻らない
+      return false if path.split("?").first.match?(%r{/download(?:/|\z)|\.(?:xlsx|xls|csv|zip|pdf)\z}i)
 
       true
     end
@@ -656,9 +659,6 @@ module Lti
             return
           end
         end
-        if request.get? && !%w[login launch jwks].include?(action_name) && lti_returnable_path?(request.path)
-          session[:launch_url] = request.path
-        end
       end
     end
     
@@ -691,6 +691,19 @@ module Lti
     end
 
     private
+    # LTI 再起動時に戻す画面として、HTML 画面を返した GET だけを記録する。
+    # 応答前に記録するとダウンロード（send_file 等）の URL まで記録され、再起動でダウンロードが走るため応答後に判定する。
+    def remember_lti_launch_url
+      return unless admin_user_signed_in?
+      return unless request.get? && !request.xhr? && request.headers["Turbo-Frame"].blank?
+      return if %w[login launch jwks].include?(action_name)
+      return unless response.status == 200 && response.media_type == "text/html"
+      return if response.headers["Content-Disposition"].to_s.start_with?("attachment")
+      return unless lti_returnable_path?(request.path)
+
+      session[:launch_url] = request.path
+    end
+
     def set_not_need_navlink
       @not_need_navlink = true
     end

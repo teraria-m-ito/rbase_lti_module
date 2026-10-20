@@ -99,10 +99,17 @@ module Lti
             lms_user = lms_user || ::LmsUser.where(username: username).first
             lms_user = lms_user || ::LmsUser.new
 
-            # 別の sub に紐付いたユーザへ、メール・ユーザ名の一致だけで成りすませないようにする
+            # 別 LMS のユーザへ、ユーザ名の一致だけで乗り換わらないようにする。
+            # 同じ iss で sub だけ変わった場合（開発者キー再発行・Canvas ユーザ再作成）は sub を更新して続行する。
             if lti_sub.present? && lms_user.lti_sub.present? && lms_user.lti_sub != lti_sub
-              Rails.logger.error("LTI sub mismatch lms_user_id=#{lms_user.id} iss=#{launch_data['iss']}")
-              return _render_403
+              if lms_user.lms.to_s == launch_data["iss"].to_s
+                Rails.logger.warn(
+                  "LTI sub updated lms_user_id=#{lms_user.id} iss=#{launch_data['iss']}"
+                )
+              else
+                Rails.logger.error("LTI sub mismatch lms_user_id=#{lms_user.id} iss=#{launch_data['iss']}")
+                return _render_403
+              end
             end
           end
 

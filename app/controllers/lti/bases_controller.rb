@@ -469,6 +469,8 @@ module Lti
       return false if path.include?("/login") || path.include?("/launch") || path.include?("/jwks")
       return false if path.start_with?("/canvas/homes") || path.start_with?("/lti_top")
       return false if path.start_with?(new_admin_user_session_path)
+      # 動的登録は database_name 等のクエリが本体。パスだけ覚えて戻すと missing database_name になる
+      return false if path.split("?").first.start_with?("/api/lti/tool/register")
       # 旧処理で記録済みのダウンロード URL に戻らない
       return false if path.split("?").first.match?(%r{/download(?:/|\z)|\.(?:xlsx|xls|csv|zip|pdf)\z}i)
 

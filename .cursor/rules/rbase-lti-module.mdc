@@ -1,0 +1,23 @@
+---
+description: rbase_lti_module は複数プロジェクト共有。LTI の起動・動的登録・復帰を変えるときは全利用先への影響を見る。
+alwaysApply: true
+---
+
+# rbase_lti_module は複数プロジェクト共通
+
+`rbase_gems/rbase_lti_module` と `lib/customizes/rbase_lti_module` は、共有実体 `workspace_place/rbase_lti_module` へのシンボリックリンクです。修正は共有実体に入り、参照している全プロジェクトへ同時に届きます。プロジェクト内のコピーだと思って変えない。
+
+利用先は少なくとも次です。
+
+- rbase7_canvas_admin
+- rbase7_eport
+- rbase7_ldi
+- rbase7_cdi
+- rbase7_mnb_import
+
+## 変更時
+
+- 起動、動的登録、`lti_ctx`、セッション復帰は共通処理です。一つの画面専用のパスやクエリを共通側へ埋め込まない。固有の動きは、そのプロジェクトのコントローラや設定で足す。
+- 動的登録 `/api/lti/tool/register` は `database_name` などのクエリが本体です。パスだけを起動後の戻り先にしない。戻すと `missing database_name` になる。
+- `session[:launch_url]` はパスのみです。クエリ付き URL を戻り先にする処理では、登録 URL を復帰対象から外す。
+- `lti_ctx` は戻り URL へ足すだけです。登録 URL 自体を LTI の戻り先にしない。

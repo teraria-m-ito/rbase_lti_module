@@ -22,3 +22,6 @@ application.register("lti--operation_logs", LTIOperationLogsController)
 
 import LTIImportHistoriesController from "./LTI/import_histories_controller"
 application.register("lti--import_histories", LTIImportHistoriesController)
+
+import ImportBaseHistoriesController from "./import_base_histories_controller"
+application.register("import_base_histories", ImportBaseHistoriesController)

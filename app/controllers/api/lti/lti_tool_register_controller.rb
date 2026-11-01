@@ -1,6 +1,7 @@
 require 'net/http'
 require 'json'
 require 'uri'
+require 'base64'
 
 module Api
   module Lti
@@ -20,6 +21,13 @@ module Api
         entry "course_home_sub_navigation", :course_home_sub_navigation, "コースホームサブナビゲーション"
         entry "course_settings_sub_navigation", :course_settings_sub_navigation, "コース設定サブナビゲーション"
         entry "top_navigation", :top_navigation, "トップナビゲーション"
+      end
+
+      # Instructure ホストの Canvas は、アカウントドメイン・OpenID 設定・登録 API が別ホストになる
+      selectable_attr :canvas_cloud_environment do
+        entry "production", :production, "本番", issuer_host: "canvas.instructure.com", service_host: "sso.canvaslms.com"
+        entry "beta", :beta, "ベータ", issuer_host: "canvas.beta.instructure.com", service_host: "sso.beta.canvaslms.com"
+        entry "test", :test, "テスト", issuer_host: "canvas.test.instructure.com", service_host: "sso.test.canvaslms.com"
       end
 
       def new
@@ -48,7 +56,7 @@ module Api
           Rails.logger.warn("[LTI DynReg] registration_lms_url not registered: database_name=#{@database_name}")
           return render status: :forbidden, plain: 'calling LMS is not registered'
         end
-        unless url_origin(@openid_configuration_url) == registered_origin
+        unless trusted_dynreg_url?(@openid_configuration_url, registered_origin, @openid_configuration_url)
           Rails.logger.warn("[LTI DynReg] untrusted openid_configuration: #{@openid_configuration_url} (registered: #{registered_origin})")
           return render status: :forbidden, plain: 'untrusted openid_configuration'
         end
@@ -72,7 +80,7 @@ module Api
         unless registration_endpoint
           return render status: :bad_request, plain: 'registration_endpoint not found in openid_configuration'
         end
-        unless url_origin(registration_endpoint) == registered_origin
+        unless trusted_dynreg_url?(registration_endpoint, registered_origin, @openid_configuration_url)
           Rails.logger.warn("[LTI DynReg] untrusted registration_endpoint: #{registration_endpoint} (registered: #{registered_origin})")
           return render status: :forbidden, plain: 'untrusted registration_endpoint'
         end
@@ -115,12 +123,46 @@ module Api
       private
 
       def url_origin(url)
-        uri = URI.parse(url.to_s.strip)
-        return nil unless uri.is_a?(URI::HTTP) && uri.host.present?
+        host = url_host(url)
+        return nil if host.blank?
 
-        "#{uri.scheme}://#{uri.host.downcase}:#{uri.port}"
+        uri = URI.parse(url.to_s.strip)
+        return nil unless uri.is_a?(URI::HTTP)
+
+        "#{uri.scheme}://#{host}:#{uri.port}"
       rescue URI::InvalidURIError
         nil
+      end
+
+      def url_host(url)
+        URI.parse(url.to_s.strip).host.to_s.downcase
+      rescue URI::InvalidURIError
+        ""
+      end
+
+      # 呼び出し元LMSと同じオリジン、または Instructure クラウドの対応ホストを許可する。
+      # クラウドの場合は registration_token の root_account_domain が呼び出し元LMSのホストと一致する必要がある。
+      # トークン署名は未検証なので、ホストの許可リストとセットで見る。任意の URL は許可しない。
+      def trusted_dynreg_url?(url, registered_origin, openid_configuration_url)
+        origin = url_origin(url)
+        return false unless origin
+        return true if origin == registered_origin
+
+        issuer_host = url_host(openid_configuration_url)
+        environment = self.class.canvas_cloud_environment_entries.detect { |entry| entry[:issuer_host] == issuer_host }
+        return false unless environment
+
+        segment = @registration_token.to_s.split(".")[1].to_s
+        return false if segment.blank?
+
+        padded = segment + ("=" * ((4 - segment.length % 4) % 4))
+        account_host = JSON.parse(Base64.urlsafe_decode64(padded))["root_account_domain"].to_s.strip.downcase
+        return false if account_host.blank? || account_host != url_host(registered_origin)
+
+        host = url_host(url)
+        host == environment[:issuer_host] || host == environment[:service_host]
+      rescue ArgumentError, JSON::ParserError
+        false
       end
 
       # app_part_url は LTI エンドポイント用パス（例: ldi/dashboard）。

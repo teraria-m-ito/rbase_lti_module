@@ -8,6 +8,7 @@ module Api
     class LtiToolRegisterController < ::Api::BasesController
       include ApiCommon
       include ::SelectableAttr::Base
+      include ::Rbase::PluginModule::Extendable
 
       layout false
 
@@ -266,6 +267,12 @@ module Api
         end
 
         icon_url = "#{domain_url}#{view_context.asset_path("menu_icon.svg")}"
+        # scope=true のときだけ scope を付ける。中身は利用プロジェクトが dynamic_registration_scopes で返す
+        requested_scopes = if ActiveModel::Type::Boolean.new.cast(params[:scope])
+                             Array(dynamic_registration_scopes).flat_map { |value| value.to_s.split(/\s+/) }.map(&:strip).reject(&:blank?).uniq
+                           else
+                             []
+                           end
 
         result = {
           "application_type" => "web",
@@ -301,8 +308,14 @@ module Api
             "deep_link_return_url" => deep_link_return_url
           }
         }
+        result["scope"] = requested_scopes.join(" ") if requested_scopes.present?
         Rails.logger.info(result)
         result
+      end
+
+      # scope=true のときに登録へ載せる scope。利用プロジェクトが差し替える。未指定なら空
+      def dynamic_registration_scopes
+        []
       end
     end
   end

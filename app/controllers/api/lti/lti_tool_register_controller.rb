@@ -121,6 +121,11 @@ module Api
         render status: :internal_server_error, plain: 'unexpected error'
       end
 
+      # 権限マスタ用。new は convert_action で create を参照する。
+      def create
+        new
+      end
+
       private
 
       def url_origin(url)

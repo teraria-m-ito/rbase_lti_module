@@ -14,6 +14,9 @@ en:
     lms_user_imports: "Admin / LMS user import"
     lms_user_import_attachments: "Admin / LMS user import upload"
 
+    api/bases: "API / Base"
+    api/lti/lti_tool_register: "API / LTI / Tool dynamic registration"
+
     lti/bases: "LTI / Common / Base controller"
     lti/admin_bases: "LTI / Admin / Admin base controller"
 
@@ -34,6 +37,7 @@ en:
       admin/lti_databases_create: "Create"
       admin/lti_databases_update: "Update"
       admin/lti_databases_destroy: "Delete"
+      api/lti/lti_tool_register_create: "Dynamic registration"
 
       lms_users_index: "Search"
       lms_users_show: "Details"

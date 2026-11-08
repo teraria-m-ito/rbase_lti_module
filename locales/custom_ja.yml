@@ -15,6 +15,9 @@ ja:
     lms_user_import_attachments: "管理/LMSユーザインポートアップロード"
     import_base_histories: "管理/インポート履歴"
 
+    api/bases: "API/ベース"
+    api/lti/lti_tool_register: "API/LTI/ツール動的登録"
+
     lti/bases: "LTI/共通/ベースコントローラ"
     lti/admin_bases: "LTI/管理者/管理者ベースコントローラ"
 
@@ -37,6 +40,7 @@ ja:
       admin/lti_databases_create: "新規登録"
       admin/lti_databases_update: "更新"
       admin/lti_databases_destroy: "削除"
+      api/lti/lti_tool_register_create: "動的登録"
 
       lms_users_index: "検索"
       lms_users_show: "詳細"
